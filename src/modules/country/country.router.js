@@ -3,7 +3,7 @@ const countryrouter = express.Router()
 import * as country from "./country.controller.js";
 
 
-countryrouter.route('/').get(country.getAllCountries).post(country.selectCountry)
+countryrouter.route('/').get(country.getAllCountries)
 countryrouter.route('/add').post(country.addcountry)
 export {countryrouter}
 

@@ -21,7 +21,7 @@ export const signin = catchAsyncError(async (req, res, next) => {
     let token = Jwt.sign(
       { name: isFound.name, userId: isFound._id, role: isFound.role },
       "mynameisRoqaya",
-      { expiresIn: "90d" }
+      { expiresIn: "3d" }
     );
     return res.json({ message: "success", token });
   }

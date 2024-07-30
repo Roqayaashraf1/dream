@@ -1,10 +1,12 @@
 import express from "express";
-import { createCashOrder } from "./order.controller.js";
+import { createCashOrder, getAllOrders, getSpecificOrder } from "./order.controller.js";
 import { allowedTo, protectRoutes } from "../auth/auth.Controller.js";
+import { checkCurrency } from "../country/country.controller.js";
 const orderRouter = express.Router();
-
+orderRouter.route("/").get(protectRoutes, allowedTo("user"), getSpecificOrder);
+orderRouter.route('/allorders').get(protectRoutes, allowedTo("admin"),getAllOrders)
 orderRouter
   .route("/:id")
-  .post(protectRoutes,
-    allowedTo("admin","user"),createCashOrder)
+  .post(checkCurrency ,protectRoutes, allowedTo("user"), createCashOrder);
+
 export { orderRouter };

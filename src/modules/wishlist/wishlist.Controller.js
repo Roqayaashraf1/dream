@@ -1,17 +1,17 @@
 import { catchAsyncError } from "../../middleWare/catchAsyncError.js";
 import { AppError } from "../../utilities/AppError.js";
 import { userModel } from "../../../dataBase/models/user.model.js";
+import { getExchangeRate } from "../../utilities/getExchangeRate.js";
 
 export const addToWishlist = catchAsyncError(async (req, res, next) => {
   let { product } = req.params;
   let result = await userModel.findByIdAndUpdate(
     req.user._id,
     { $addToSet: { wishlist: product } },
-    req.body,
     { new: true }
   );
-  !result && next(new AppError(`user not found`, 404));
-  result && res.json({ message: "success", result });
+  if (!result) return next(new AppError(`User not found`, 404));
+  res.json({ message: "success", result });
 });
 
 export const removeFromWishlist = catchAsyncError(async (req, res, next) => {
@@ -21,12 +21,29 @@ export const removeFromWishlist = catchAsyncError(async (req, res, next) => {
     { $pull: { wishlist: product } },
     { new: true }
   );
-  !result && next(new AppError(`product not found`, 404));
-  result && res.json({ message: "success", result: result.wishlist });
+  if (!result) return next(new AppError(`Product not found`, 404));
+  res.json({ message: "success", result: result.wishlist });
 });
 
 export const getAllWishlist = catchAsyncError(async (req, res, next) => {
-  let result = await userModel.findOne({ _id: req.user._id }).populate('wishlist');
-  !result && next(new AppError(` not found`, 404));
-  result && res.json({ message: "success", result: result.wishlist });
+  const { currency } = req.headers;
+
+  let user = await userModel.findOne({ _id: req.user._id }).populate('wishlist');
+  if (!user) return next(new AppError(`User not found`, 404));
+
+  if (currency && currency !== "KWD") {
+    try {
+      const exchangeRate = await getExchangeRate(currency);
+      const wishlist = user.wishlist.map(item => ({
+        ...item._doc,
+        price: (item.price * exchangeRate).toFixed(2),
+        currency,
+      }));
+      return res.json({ message: "success", result: wishlist });
+    } catch (error) {
+      return res.status(500).json({ message: "Error converting currency", error });
+    }
+  }
+
+  res.json({ message: "success", result: user.wishlist });
 });

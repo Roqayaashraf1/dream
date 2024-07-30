@@ -1,13 +1,18 @@
 import express from "express";
-
 import * as cart from "./cart.Controller.js";
-// import { protectRoutes, allowedTo } from "../auth/auth.Controller.js";
+import { allowedTo, protectRoutes } from "../auth/auth.Controller.js";
+import { checkCurrency } from "../country/country.controller.js";
+
 const cartRouter = express.Router();
 
-cartRouter.route("/").post(cart.addToCart);
-cartRouter
-  .route("/:id")
-  .delete(cart.removeProductFromCart)
-  .put(cart.updateQuantity)
-  .get(cart.getloggedusercart);
+cartRouter.use(checkCurrency);
+
+cartRouter.route("/")
+  .post(protectRoutes, allowedTo("user"), cart.addToCart);
+
+cartRouter.route("/:id")
+  .delete(protectRoutes, allowedTo("user"), cart.removeProductFromCart)
+  .put(protectRoutes, allowedTo("user"), cart.updateQuantity)
+  .get(protectRoutes, allowedTo("user"), cart.getloggedusercart);
+
 export { cartRouter };

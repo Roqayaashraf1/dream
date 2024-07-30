@@ -51,7 +51,11 @@ const productSchema = mongoose.Schema(
       ref: "author",
       required: [true, "product authorised required"],
     },
-  
+    Subcategory:{
+      type:mongoose.Types.ObjectId,
+      ref:'Subcategory',
+      required:[true,'product subcategory reqired']
+  },
     image: String,
   },
   { timestamps: true }

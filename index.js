@@ -15,6 +15,7 @@ import { orderRouter } from "./src/modules/order/order.router.js";
 import { cartRouter } from "./src/modules/cart/cart.Router.js";
 import { wishlistrouter } from "./src/modules/wishlist/wishlist.Router.js";
 import { countryrouter } from "./src/modules/country/country.router.js";
+import { SubcategoryRouter } from "./src/modules/subcategory/subcategory.router.js";
 const app = express();
 const port = 3000;
 app.use(express.json());
@@ -38,6 +39,7 @@ app.use("/api/v1/authors", authorRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1/wishlist", wishlistrouter);
 app.use("/api/v1/country", countryrouter);
+app.use("/api/v1/subcategory", SubcategoryRouter);
 app.all("*", (req, res, next) => {
   //res.json({Message:`can't find this route: ${req.originalUrl}`})
   next(new AppError(`can't find this route: ${req.originalUrl}`, 404));

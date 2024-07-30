@@ -6,14 +6,12 @@ import {
   getAllCategories,
   getCategory,
 } from "./category.Controller.js";
-import { validation } from "../../middleWare/validation.js";
-import { createCategorySchema } from "./category.validation.js";
 import { allowedTo, protectRoutes } from "../auth/auth.Controller.js";
+
 const categoryRouter = express.Router();
 categoryRouter
   .route("/")
-  .post(
-    validation(createCategorySchema),
+  .post(protectRoutes, allowedTo("admin"), 
     createCategory
   )
   .get(getAllCategories);
@@ -21,7 +19,7 @@ categoryRouter
 categoryRouter
   .route("/:id")
   .get(getCategory)
-  .delete( deleteCategories)
-  .put( UpdateCategories);
+  .delete(protectRoutes, allowedTo("admin"),  deleteCategories)
+  .put(protectRoutes, allowedTo("admin"),  UpdateCategories);
 
 export { categoryRouter };

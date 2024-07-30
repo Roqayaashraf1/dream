@@ -1,13 +1,8 @@
-import axios from 'axios';
-import { productModel } from './models/Product.js';
-import { cartModel } from './models/Cart.js';
-import { catchAsyncError } from './utils/catchAsyncError.js';
-import { AppError } from './utils/appError.js';
-
-const getExchangeRate = async (currency) => {
-  const response = await axios.get('https://api.exchangerate-api.com/v4/latest/KWD');
-  return response.data.rates[currency];
-};
+import { getExchangeRate } from '../../utilities/getExchangeRate.js';
+import { catchAsyncError } from '../../middleWare/catchAsyncError.js';
+import { AppError } from '../../utilities/AppError.js';
+import { productModel } from '../../../dataBase/models/product.model.js';
+import { cartModel } from '../../../dataBase/models/cart.model.js';
 
 function calcTotalPrice(cart, exchangeRate = 1) {
   let totalprice = 0;
@@ -71,7 +66,7 @@ export const removeProductFromCart = catchAsyncError(async (req, res, next) => {
   );
   if (!result) return next(new AppError(`item not found`, 401));
   calcTotalPrice(result);
-  result.save();
+  await result.save();
   res.json({ message: "success", result });
 });
 
@@ -90,26 +85,15 @@ export const updateQuantity = catchAsyncError(async (req, res, next) => {
 
 export const getloggedusercart = catchAsyncError(async (req, res, next) => {
   const { currency } = req.headers;
+  const exchangeRate = await getExchangeRate(currency) || 1; // Fetch exchange rate based on currency header
 
   let cartItems = await cartModel
     .findOne({ user: req.user._id })
     .populate("cartItems.product");
 
-  if (currency && currency !== 'KWD') {
-    try {
-      const exchangeRate = await getExchangeRate(currency);
-      calcTotalPrice(cartItems, exchangeRate);
-      cartItems.cartItems = cartItems.cartItems.map(item => ({
-        ...item._doc,
-        price: (item.price * exchangeRate).toFixed(2),
-        currency,
-      }));
-    } catch (error) {
-      return res.status(500).json({ message: 'Error converting currency', error });
-    }
-  } else {
-    calcTotalPrice(cartItems);
-  }
+  if (!cartItems) return next(new AppError("Cart not found", 404));
+
+  calcTotalPrice(cartItems, exchangeRate); // Apply exchange rate
 
   res.status(201).json({ message: "success", cart: cartItems });
 });

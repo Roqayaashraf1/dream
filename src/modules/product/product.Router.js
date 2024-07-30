@@ -12,6 +12,8 @@ import {
 } from "./product.Controller.js";
 import { protectRoutes, allowedTo } from "../auth/auth.Controller.js";
 import { AppError } from "../../utilities/AppError.js";
+import { checkCurrency } from "../country/country.controller.js";
+
 // Convert module URL to file path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,28 +36,35 @@ const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image")) {
     cb(null, true);
   } else {
-    cb(new AppError("Images only"), false);
+    cb(new AppError("Images only", 400), false);
   }
 };
+
 const upload = multer({ storage, fileFilter });
 
 const productRouter = express.Router();
 
-productRouter
-  .route("/")
+productRouter.route("/")
   .post(
     upload.single("image"),
     protectRoutes,
     allowedTo("admin"),
     createproduct
   )
-  .get(getAllproducts);
+  .get(checkCurrency, getAllproducts);
 
-productRouter
-  .route("/:id")
-  .get(protectRoutes,
-    allowedTo("admin","user"),getproduct)
-  .delete(protectRoutes, allowedTo("admin"), deleteproduct)
-  .put(protectRoutes, allowedTo("admin"), UpdateProduct);
+productRouter.route("/:id")
+  .get(checkCurrency, getproduct)
+  .delete(
+    protectRoutes,
+    allowedTo("admin"),
+    deleteproduct
+  )
+  .put(
+    protectRoutes,
+    allowedTo("admin"),
+    upload.single("image"),
+    UpdateProduct
+  );
 
 export { productRouter };
