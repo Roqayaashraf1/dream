@@ -7,6 +7,7 @@ import {
   getCategory,
 } from "./category.Controller.js";
 import { allowedTo, protectRoutes } from "../auth/auth.Controller.js";
+import { checkCurrency } from "../country/country.controller.js";
 
 const categoryRouter = express.Router();
 categoryRouter
@@ -14,11 +15,11 @@ categoryRouter
   .post(protectRoutes, allowedTo("admin"), 
     createCategory
   )
-  .get(getAllCategories);
+  .get(checkCurrency,getAllCategories);
 
 categoryRouter
   .route("/:id")
-  .get(getCategory)
+  .get(checkCurrency,getCategory)
   .delete(protectRoutes, allowedTo("admin"),  deleteCategories)
   .put(protectRoutes, allowedTo("admin"),  UpdateCategories);
 

@@ -5,17 +5,26 @@ import { productModel } from '../../../dataBase/models/product.model.js';
 import { cartModel } from '../../../dataBase/models/cart.model.js';
 
 async function calcTotalPrice(cartItems, currency) {
-  const exchangeRate = await getExchangeRate(currency);
   let totalPrice = 0;
   cartItems.forEach((item) => {
-    totalPrice += item.price * exchangeRate * item.quantity;
+    totalPrice += item.price * item.quantity;
   });
-  const newItems = cartItems.map(item => ({
-    ...item,
-    price: item.price * exchangeRate
-  }));
+  const newItems = cartItems;
   return { totalPrice, newItems };
 }
+
+
+
+// async function calcTotalPrice(cartItems, currency) {
+//   const exchangeRate = await getExchangeRate(currency);
+//   let totalPrice = 0;
+//   cartItems.forEach((item) => {
+//     totalPrice += item.price * exchangeRate * item.quantity;
+//   });
+//   const newItems = cartItems;
+//   return { totalPrice, newItems };
+// }
+
 
 
 export const addToCart = catchAsyncError(async (req, res, next) => {
@@ -74,7 +83,7 @@ export const removeProductFromCart = catchAsyncError(async (req, res, next) => {
   const currency = req.headers.currency;
   let result = await cartModel.findOneAndUpdate(
     { user: req.user._id },
-    { $pull: { cartItems: { _id: req.params.itemId } } },
+    { $pull: { cartItems: { _id: req.params.id } } },
     { new: true }
   );
   if (!result) return next(new AppError(`item not found`, 401));

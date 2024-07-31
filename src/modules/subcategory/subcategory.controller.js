@@ -58,10 +58,12 @@ export const getSubCategory = catchAsyncError(async (req, res, next) => {
     let result = await SubcategoryModel.findById(id);
     if (!result) return next(new AppError(`Subcategory not found`, 404));
 
-    const language = req.query.language || 'arabic';
+    const language = req.headers.language || 'arabic';
+   const  name= language === 'english' ? result.englishname : result.arabicname
     result = {
-        name: language === 'english' ? result.englishname : result.arabicname,
-        ...result._doc
+      
+        ...result._doc,
+        name
     };
 
     res.json({
