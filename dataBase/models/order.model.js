@@ -8,9 +8,12 @@ const orderSchema = mongoose.Schema(
         product: { type: mongoose.Types.ObjectId, ref: "product" },
         quantity: Number,
         price: Number,
+        priceExchanged: Number
       },
     ],
     totalOrderPrice: Number,
+
+    totalPriceExchanged: Number,
     currency: String,
     shippingAddress: {
       street: String,

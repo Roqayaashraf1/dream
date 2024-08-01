@@ -13,6 +13,6 @@ cartRouter.route("/")
 cartRouter.route("/:id")
   .delete(protectRoutes, allowedTo("user"), cart.removeProductFromCart)
   .put(protectRoutes, allowedTo("user"), cart.updateQuantity)
-  .get(protectRoutes, allowedTo("user"), cart.getloggedusercart);
+  .get(protectRoutes, allowedTo("user"), cart.getLoggedUserCart);
 
 export { cartRouter };

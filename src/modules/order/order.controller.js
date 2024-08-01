@@ -19,19 +19,26 @@ export const createCashOrder = catchAsyncError(async (req, res, next) => {
   const cart = await cartModel.findById(req.params.id).populate("cartItems.product");
   if (!cart) return next(new AppError("Cart not found", 404));
 
-  const {
-    currency
-  } = req.headers;
+  const { currency } = req.headers;
   const shippingAddress = req.body.shippingAddress;
-  const totalPrice = cart.totalPrice;
+  const totalPriceExchanged = cart.totalPriceExchanged;
+  const cartItemsWithExchange = cart.cartItems.map((item) => ({
+    product: item.product._id,
+    quantity: item.quantity,
+    price: item.price,
+    priceExchanged: item.priceExchanged,
+  }));
 
   const order = new orderModel({
     user: req.user._id,
-    cartItems: cart.cartItems,
-    totalOrderPrice: totalPrice,
+    cartItems: cartItemsWithExchange,
+    totalPrice: cart.totalPrice,
+    totalPriceExchanged: totalPriceExchanged,
     currency: currency || "KWD",
     shippingAddress,
     PaymentMethod: "cash",
+    isPaied: false,
+    isDelivered: false,
   });
 
   await order.save();
@@ -39,34 +46,19 @@ export const createCashOrder = catchAsyncError(async (req, res, next) => {
   if (order) {
     const options = cart.cartItems.map((item) => ({
       updateOne: {
-        filter: {
-          _id: item.product._id
-        },
-        update: {
-          $inc: {
-            quantity: -item.quantity,
-            sold: item.quantity
-          }
-        },
+        filter: { _id: item.product._id },
+        update: { $inc: { quantity: -item.quantity, sold: item.quantity } },
       },
     }));
     await productModel.bulkWrite(options);
     await cartModel.findByIdAndDelete(req.params.id);
-    const {
-      street,
-      building,
-      area,
-      floor,
-      apartment,
-      city,
-      phone,
-      country
-    } = shippingAddress;
+
+    const { street, building, area, floor, apartment, city, phone, country } = shippingAddress;
     const emailSubject = "Your Order Details";
     const emailMessage = `
       <h1>Order Confirmation</h1>
       <p>Thank you for your order!</p>
-      <p><strong>Total Price:</strong> ${totalPrice} ${currency || "KWD"}</p>
+      <p><strong>Total Price </strong> ${totalPriceExchanged.toFixed(2)} ${currency}</p>
       <p><strong>Shipping Address:</strong><br>
         Street: ${street}<br>
         Building: ${building}<br>
@@ -90,36 +82,44 @@ export const createCashOrder = catchAsyncError(async (req, res, next) => {
       }
     } catch (error) {
       console.error("Error sending email:", error);
-      return res.status(500).json({
-        message: "Failed to send order confirmation email",
-        error
-      });
+      return res.status(500).json({ message: "Failed to send order confirmation email", error });
     }
   }
 
-  res.json({
-    message: "Order created successfully",
-    order
-  });
+  res.json({ message: "Order created successfully", order });
 });
 
-
 export const getSpecificOrder = catchAsyncError(async (req, res, next) => {
-  let order = await orderModel
-    .find({
-      user: req.user._id
-    })
+  let orders = await orderModel
+    .find({ user: req.user._id })
     .populate("cartItems.product");
-  res.status(200).json({
-    message: "success",
-    order
+
+  const ordersWithExchange = orders.map((order) => {
+    const cartItemsWithExchange = order.cartItems.map((item) => ({
+      ...item._doc,
+      priceExchanged: item.priceExchanged,
+    }));
+
+    return {
+      ...order._doc,
+      cartItems: cartItemsWithExchange,
+      totalPriceExchanged: order.totalPriceExchanged, 
+    };
   });
+
+  res.status(200).json({ message: "success", orders: ordersWithExchange });
 });
 
 export const getAllOrders = catchAsyncError(async (req, res, next) => {
   let orders = await orderModel.find().populate("cartItems.product");
-  res.status(200).json({
-    message: "success",
-    orders
-  });
+
+  const ordersWithExchange = orders.map((order) => ({
+    ...order._doc,
+    cartItems: order.cartItems.map((item) => ({
+      ...item._doc,
+      priceExchanged: item.priceExchanged,
+    })),
+  }));
+
+  res.status(200).json({ message: "success", orders: ordersWithExchange });
 });

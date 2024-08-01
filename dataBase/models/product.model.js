@@ -14,6 +14,8 @@ const productSchema = mongoose.Schema(
       required: [true, "product price required"],
       min: 0
     },
+    priceExchanged:Number
+    ,
     currency:{
       type:String,
       default:"KWD"
