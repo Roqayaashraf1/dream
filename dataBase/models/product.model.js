@@ -19,7 +19,8 @@ const productSchema = mongoose.Schema(
     currency:{
       type:String,
       default:"KWD"
-    }
+    },
+    papersnumber:Number
     ,
     priceAfterDiscount: {
       type: Number,
