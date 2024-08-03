@@ -1,12 +1,13 @@
 import express from "express";
 
 import * as auth from "./auth.Controller.js";
+import { checkCurrency } from "../country/country.controller.js";
 
 const authRouter = express.Router();
 
-authRouter.post("/signup", auth.signup);
-authRouter.post("/signin", auth.signin);
+authRouter.post("/signup", checkCurrency, auth.signup);
+authRouter.post("/signin",checkCurrency, auth.signin);
 authRouter.patch("/forgetpassword",auth.forgetPassword)
-authRouter.patch('/resetpassword/:token',auth.resetPasword)
+authRouter.patch('/resetpassword/:token',checkCurrency,auth.resetPasword)
 
 export { authRouter };

@@ -29,7 +29,7 @@ const convertPrices = async (products, currency) => {
 export const createproduct = catchAsyncError(async (req, res) => {
   req.body.slug = slugify(req.body.title);
   req.body.image = req.file.filename;
-  const { description, price, quantity, author, category } = req.body;
+  const { description, price, quantity, author, category, papersnumber , Subcategory} = req.body;
   let result = new productModel(req.body);
   await result.save();
 
