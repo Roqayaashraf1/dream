@@ -7,7 +7,7 @@ import { checkCurrency } from "../country/country.controller.js";
 wishlistrouter.use(protectRoutes, allowedTo("user"), checkCurrency);
 
 wishlistrouter.route('/')
-  .patch(wishlist.addToWishlist)
+  .post(wishlist.addToWishlist)
   .delete(wishlist.removeFromWishlist)
   .get(wishlist.getAllWishlist);
 
