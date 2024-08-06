@@ -1,6 +1,6 @@
 import { authorModel } from "../../../dataBase/models/author.model.js";
 import slugify from "slugify";
-import { AppError } from "../../utilities/AppError.js";
+import { AppError } from "../../utilities/appError.js";
 import * as factory from "../handlers/factor.handler.js";
 import { APIFeatures } from "../../utilities/APIFeatures.js";
 import { catchAsyncError } from "../../middleWare/catchAsyncError.js";

@@ -15,7 +15,7 @@ import { cartRouter } from "./src/modules/cart/cart.Router.js";
 import { wishlistrouter } from "./src/modules/wishlist/wishlist.Router.js";
 import { countryrouter } from "./src/modules/country/country.router.js";
 import { SubcategoryRouter } from "./src/modules/subcategory/subcategory.router.js";
-import { AppError } from "./src/utilities/AppError.js";
+import { AppError } from "./src/utilities/appError.js";
 const app = express();
 const port = 3000;
 app.use(express.json());

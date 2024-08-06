@@ -10,7 +10,7 @@ import {
 } from "../../middleWare/catchAsyncError.js";
 import {
   AppError
-} from "../../utilities/AppError.js";
+} from "../../utilities/appError.js";
 import {
   orderModel
 } from "../../../dataBase/models/order.model.js";

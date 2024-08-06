@@ -1,6 +1,6 @@
 
 import { catchAsyncError } from "../../middleWare/catchAsyncError.js";
-import { AppError } from "../../utilities/AppError.js";
+import { AppError } from "../../utilities/appError.js";
 import { userModel } from "../../../dataBase/models/user.model.js";
 import * as factory from "../handlers/factor.handler.js";
 import { APIFeatures } from "../../utilities/APIFeatures.js";

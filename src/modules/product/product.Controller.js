@@ -3,7 +3,7 @@ import slugify from "slugify";
 import { productModel } from "../../../dataBase/models/product.model.js";
 import { catchAsyncError } from "../../middleWare/catchAsyncError.js";
 import { APIFeatures } from "../../utilities/APIFeatures.js";
-import { AppError } from "../../utilities/AppError.js";
+import { AppError } from "../../utilities/appError.js";
 import { getExchangeRate } from "../../utilities/getExchangeRate.js";
 import * as factory from "../handlers/factor.handler.js";
 

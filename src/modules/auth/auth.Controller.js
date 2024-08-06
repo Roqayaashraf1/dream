@@ -1,7 +1,7 @@
 import Jwt from "jsonwebtoken";
 import { catchAsyncError } from "../../middleWare/catchAsyncError.js";
 import { userModel } from "../../../dataBase/models/user.model.js";
-import { AppError } from "../../utilities/AppError.js";
+import { AppError } from "../../utilities/appError.js";
 import bcrypt from "bcrypt";
 import sendEmail from "../../utilities/sendEmail.js";
 

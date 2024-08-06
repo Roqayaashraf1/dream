@@ -11,7 +11,7 @@ import {
   getproduct,
 } from "./product.Controller.js";
 import { protectRoutes, allowedTo } from "../auth/auth.Controller.js";
-import { AppError } from "../../utilities/AppError.js";
+import { AppError } from "../../utilities/appError.js";
 import { checkCurrency } from "../country/country.controller.js";
 
 // Convert module URL to file path

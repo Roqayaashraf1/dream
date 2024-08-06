@@ -4,7 +4,7 @@ import {
 } from "../../middleWare/catchAsyncError.js";
 import {
     AppError
-} from "../../utilities/AppError.js";
+} from "../../utilities/appError.js";
 import {
     SubcategoryModel
 } from "../../../dataBase/models/subcategory.model.js";

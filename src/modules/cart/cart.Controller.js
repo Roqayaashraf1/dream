@@ -1,6 +1,6 @@
 import { getExchangeRate } from '../../utilities/getExchangeRate.js';
 import { catchAsyncError } from '../../middleWare/catchAsyncError.js';
-import { AppError } from '../../utilities/AppError.js';
+import { AppError } from '../../utilities/appError.js';
 import { productModel } from '../../../dataBase/models/product.model.js';
 import { cartModel } from '../../../dataBase/models/cart.model.js';
 
