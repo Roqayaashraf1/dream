@@ -2,25 +2,39 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
+import {
+  fileURLToPath
+} from "url";
 import {
   UpdateProduct,
   createproduct,
   deleteproduct,
   getAllproducts,
   getproduct,
+  search,
+
 } from "./product.Controller.js";
-import { protectRoutes, allowedTo } from "../auth/auth.Controller.js";
-import { AppError } from "../../utilities/appError.js";
-import { checkCurrency } from "../country/country.controller.js";
+import {
+  protectRoutes,
+  allowedTo
+} from "../auth/auth.Controller.js";
+import {
+  AppError
+} from "../../utilities/appError.js";
+import {
+  checkCurrency
+} from "../country/country.controller.js";
 
 // Convert module URL to file path
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(
+  import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure the upload directory exists
 const uploadDir = path.join(__dirname, "/uploads/product");
-fs.mkdirSync(uploadDir, { recursive: true });
+fs.mkdirSync(uploadDir, {
+  recursive: true
+});
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -40,7 +54,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ storage, fileFilter });
+const upload = multer({
+  storage,
+  fileFilter
+});
 
 const productRouter = express.Router();
 
@@ -52,6 +69,8 @@ productRouter.route("/")
     createproduct
   )
   .get(checkCurrency, getAllproducts);
+  productRouter.route("/search")
+  .get(search)
 
 productRouter.route("/:id")
   .get(checkCurrency, getproduct)
@@ -67,4 +86,6 @@ productRouter.route("/:id")
     UpdateProduct
   );
 
-export { productRouter };
+export {
+  productRouter
+};

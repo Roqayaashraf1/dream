@@ -41,33 +41,25 @@ export const createCategory = catchAsyncError(async (req, res) => {
 
 export const getAllCategories = catchAsyncError(async (req, res, next) => {
   try {
-    // Determine language from header or default to 'arabic'
     const languageHeader = req.headers['accept-language'] || 'arabic';
     const language = languageHeader.toLowerCase();
     const languageField = language === 'english' || language.startsWith('en') ? 'englishname' : 'arabicname';
     const slugField = language === 'english' || language.startsWith('en') ? 'englishslug' : 'arabicslug';
 
-    console.log(`Using language field: ${languageField}`); // Debugging
-
-    // Build the query with the appropriate fields
     let apiFeatures = new APIFeatures(categoryModel.find(), req.query)
       .paginate()
       .filter()
       .selectedFields(`${languageField} ${slugField}`)
       .search()
       .sort();
-    console.log('Query:', apiFeatures.mongooseQuery.getQuery()); // Log the query being executed
-
-    // Execute the query
+    
     let result = await apiFeatures.mongooseQuery;
-
-    // Transform the result to include only the relevant name and slug fields
     result = result.map(item => {
       const obj = item.toObject();
       return {
         _id: obj._id,
-        name: obj[languageField], // Include the relevant name field
-        slug: obj[slugField]     // Include the relevant slug field
+        name: obj[languageField], 
+        slug: obj[slugField]     
       };
     });
 

@@ -1,43 +1,46 @@
 import mongoose from "mongoose";
+
 const productSchema = mongoose.Schema(
   {
     title: {
       type: String,
-      unique: [true, "product title is unique"],
+      unique: [true, "Product title must be unique"],
       trim: true,
-      required: [true, "product title is required"],
-      minLength: [2, "too short product name"],
+      required: [true, "Product title is required"],
+      minLength: [2, "Product title is too short"],
     },
-    slug: { type: String, lowecase: true, required: true },
+    slug: {
+      type: String,
+      lowercase: true, // Corrected typo
+      required: true,
+    },
     price: {
       type: Number,
-      required: [true, "product price required"],
-      min: 0
+      required: [true, "Product price is required"],
+      min: 0,
     },
-    priceExchanged:Number
-    ,
-    currency:{
-      type:String,
-      default:"KWD"
+    priceExchanged: Number,
+    currency: {
+      type: String,
+      default: "KWD",
     },
-    papersnumber:Number
-    ,
+    papersnumber: Number,
     priceAfterDiscount: {
       type: Number,
       min: 0,
     },
     description: {
       type: String,
-      minLength: [5, "too short product description"],
-      maxLength: [300, "too long product description"],
-      required: [true, "product description required"],
+      minLength: [5, "Product description is too short"],
+      maxLength: [300, "Product description is too long"],
+      required: [true, "Product description is required"],
       trim: true,
     },
     quantity: {
       type: Number,
       default: 0,
       min: 0,
-      required: [true, "product quantity required"],
+      required: [true, "Product quantity is required"],
     },
     sold: {
       type: Number,
@@ -46,24 +49,21 @@ const productSchema = mongoose.Schema(
     },
     category: {
       type: mongoose.Types.ObjectId,
-      ref: "category",
-      required: [true, "product category required"],
+      ref: "category", 
+      required: [true, "Product category is required"],
     },
     author: {
       type: mongoose.Types.ObjectId,
-      ref: "author",
-      required: [true, "product authorised required"],
+      ref: "author", 
+      required: [true, "Product author is required"],
     },
-    Subcategory:{
-      type:mongoose.Types.ObjectId,
-      ref:'Subcategory',
-      required:[true,'product subcategory reqired']
-  },
+    Subcategory: {
+      type: mongoose.Types.ObjectId,
+      ref: "subcategory", 
+      required: [true, "Product subcategory is required"],
+    },
     image: String,
   },
   { timestamps: true }
 );
-// productSchema.post("init", function (doc) {
-//   doc.image = "http://localhost:3000/uploads/product/" + doc.image;
-// });
 export const productModel = mongoose.model("product", productSchema);

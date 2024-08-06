@@ -6,10 +6,10 @@ export class APIFeatures {
 
   paginate() {
     let page = this.queryString.page * 1 || 1;
-    if (page <= 0) page = 1; // Corrected from req.query.page to page
+    if (page <= 0) page = 1; 
     let skip = (page - 1) * 5;
     this.page = page;
-    this.mongooseQuery = this.mongooseQuery.skip(skip).limit(5); // Assign back to mongooseQuery
+    this.mongooseQuery = this.mongooseQuery.skip(skip).limit(5); 
     return this;
   }
 
@@ -19,20 +19,20 @@ export class APIFeatures {
     excludedQuery.forEach((q) => {
       delete filterObj[q];
     });
-    filterObj = JSON.stringify(filterObj); // Corrected json.stringfy to JSON.stringify
+    filterObj = JSON.stringify(filterObj); 
     filterObj = filterObj.replace(
       /\b(gt|gte|lt|lte)\b/g,
       (match) => `$${match}`
     );
-    filterObj = JSON.parse(filterObj); // Corrected json.parse to JSON.parse
-    this.mongooseQuery = this.mongooseQuery.find(filterObj); // Assign back to mongooseQuery
+    filterObj = JSON.parse(filterObj); 
+    this.mongooseQuery = this.mongooseQuery.find(filterObj); 
     return this;
   }
 
   sort() {
     if (this.queryString.sort) {
       let sortedBy = this.queryString.sort.split(",").join(" ");
-      this.mongooseQuery = this.mongooseQuery.sort(sortedBy); // Assign back to mongooseQuery
+      this.mongooseQuery = this.mongooseQuery.sort(sortedBy); 
     }
     return this;
   }
@@ -52,8 +52,8 @@ export class APIFeatures {
   selectedFields() {
     if (this.queryString.fields) {
       let fields = this.queryString.fields.split(",").join(" ");
-      this.mongooseQuery = this.mongooseQuery.select(fields); // Assign back to mongooseQuery
+      this.mongooseQuery = this.mongooseQuery.select(fields);
     }
-    return this; // Return the APIFeatures instance for chaining
+    return this;
   }
 }
