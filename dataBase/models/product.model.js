@@ -11,7 +11,7 @@ const productSchema = mongoose.Schema(
     },
     slug: {
       type: String,
-      lowercase: true, // Corrected typo
+      lowercase: true, 
       required: true,
     },
     price: {
@@ -59,7 +59,7 @@ const productSchema = mongoose.Schema(
     },
     Subcategory: {
       type: mongoose.Types.ObjectId,
-      ref: "subcategory", 
+      ref: "Subcategory", 
       required: [true, "Product subcategory is required"],
     },
     image: String,

@@ -1,43 +1,73 @@
 import Jwt from "jsonwebtoken";
-import { catchAsyncError } from "../../middleWare/catchAsyncError.js";
-import { userModel } from "../../../dataBase/models/user.model.js";
-import { AppError } from "../../utilities/appError.js";
+import {
+  catchAsyncError
+} from "../../middleWare/catchAsyncError.js";
+import {
+  userModel
+} from "../../../dataBase/models/user.model.js";
+import {
+  AppError
+} from "../../utilities/appError.js";
 import bcrypt from "bcrypt";
 import sendEmail from "../../utilities/sendEmail.js";
-
+const tokenBlacklist = new Set();
 export const signup = catchAsyncError(async (req, res, next) => {
-  let isFound = await userModel.findOne({ email: req.body.email });
+  let isFound = await userModel.findOne({
+    email: req.body.email
+  });
   if (isFound) return next(new AppError("email already exists", 409));
   let user = new userModel(req.body);
   await user.save();
-  res.json({ message: "success", user });
+  res.json({
+    message: "success",
+    user
+  });
 });
 
 export const signin = catchAsyncError(async (req, res, next) => {
-  const { email, password } = req.body;
-  let isFound = await userModel.findOne({ email });
+  const {
+    email,
+    password
+  } = req.body;
+  let isFound = await userModel.findOne({
+    email
+  });
   const match = await bcrypt.compare(password, isFound.password);
   if (isFound && match) {
-    let token = Jwt.sign(
-      { name: isFound.name, userId: isFound._id, role: isFound.role },
-      "mynameisRoqaya",
-      { expiresIn: "3d" }
+    let token = Jwt.sign({
+        name: isFound.name,
+        userId: isFound._id,
+        role: isFound.role
+      },
+      "mynameisRoqaya", {
+        expiresIn: "3d"
+      }
     );
-    return res.json({ message: "success", token });
+    return res.json({
+      message: "success",
+      token
+    });
   }
   next(new AppError("incorrect email or password", 401));
 });
 
 export const forgetPassword = catchAsyncError(async (req, res, next) => {
-  const { email } = req.body;
-  const user = await userModel.findOne({ email });
+  const {
+    email
+  } = req.body;
+  const user = await userModel.findOne({
+    email
+  });
 
   if (!user) {
     return next(new AppError("Invalid email", 401));
   }
 
-  let token = Jwt.sign(
-    { name: user.name, userId: user._id, role: user.role },
+  let token = Jwt.sign({
+      name: user.name,
+      userId: user._id,
+      role: user.role
+    },
     "mynameisRoqaya"
   );
 
@@ -54,7 +84,9 @@ export const forgetPassword = catchAsyncError(async (req, res, next) => {
     return next(new AppError("Sending email failed", 500));
   }
 
-  res.json({ message: "Please check Link your email" });
+  res.json({
+    message: "Please check Link your email"
+  });
 });
 
 export const allowedTo = (...roles) => {
@@ -71,8 +103,12 @@ export const allowedTo = (...roles) => {
 };
 
 export const resetPasword = catchAsyncError(async (req, res, next) => {
-  let { token } = req.headers;
-  const { newpassword } = req.body;
+  let {
+    token
+  } = req.headers;
+  const {
+    newpassword
+  } = req.body;
   if (!token) return next(new AppError("Token not provided", 401));
   let decoded = Jwt.verify(token, "mynameisRoqaya");
   if (!decoded?._id) {
@@ -86,12 +122,21 @@ export const resetPasword = catchAsyncError(async (req, res, next) => {
   if (!user) {
     return next(new AppError("fail to reset", 400));
   }
-  res.status(200).json({ message: "done" });
+  res.status(200).json({
+    message: "done"
+  });
 });
 export const protectRoutes = catchAsyncError(async (req, res, next) => {
-  let { token } = req.headers;
+  let {
+    token
+  } = req.headers;
 
   if (!token) return next(new AppError("Token not provided", 401));
+  const authHeader = token.split('.')[1];
+  console.log(token)
+  if (tokenBlacklist.has(authHeader)) {
+    return next(new AppError("Token has been invalidated", 401));
+  }
   let decoded = Jwt.verify(token, "mynameisRoqaya");
 
   let user = await userModel.findById(decoded.userId);
@@ -103,4 +148,19 @@ export const protectRoutes = catchAsyncError(async (req, res, next) => {
   }
   req.user = user;
   next();
+});
+export const logout = catchAsyncError(async (req, res, next) => {
+  let {
+    token
+  } = req.headers;
+  if (!token) {
+    return next(new AppError("Token not provided", 401));
+  }
+
+  const authHeader = token.split('.')[1];
+  tokenBlacklist.add(authHeader);
+
+  res.json({
+    message: "Logged out successfully"
+  });
 });

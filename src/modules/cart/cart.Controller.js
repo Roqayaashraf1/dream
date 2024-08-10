@@ -65,7 +65,7 @@ export const addToCart = catchAsyncError(async (req, res, next) => {
       return next(new AppError("Insufficient product quantity", 400));
     }
     existingItem.quantity += quantity;
-    existingItem.price = product.price; // Update the price
+    existingItem.price = product.price; 
   } else {
     if (product.quantity < quantity) {
       return next(new AppError("Insufficient product quantity", 400));
@@ -109,7 +109,7 @@ export const updateQuantity = catchAsyncError(async (req, res, next) => {
   let item = cart.cartItems.find((elm) => elm.product.toString() === req.params.id);
   if (item) {
     item.quantity = req.body.quantity;
-    item.price = product.price; // Update the price
+    item.price = product.price; 
   }
 
   const { totalPrice, totalPriceExchanged, newItems } = await calcTotalPrice(cart.cartItems, currency);
@@ -126,7 +126,8 @@ export const getLoggedUserCart = catchAsyncError(async (req, res, next) => {
 
   let cart = await cartModel
     .findOne({ user: req.user._id })
-    .populate("cartItems.product");
+    .populate('cartItems.product'
+    );
 
   if (!cart) return next(new AppError("Cart not found", 404));
 
@@ -135,6 +136,7 @@ export const getLoggedUserCart = catchAsyncError(async (req, res, next) => {
   cart.totalPrice = totalPrice;
   cart.totalPriceExchanged = totalPriceExchanged;
 
-  res.status(201).json({ message: "success", cart });
+  res.status(200).json({ message: "success", cart });
 });
+
 

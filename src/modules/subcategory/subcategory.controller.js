@@ -36,7 +36,8 @@ export const getAllSubCategories = catchAsyncError(async (req, res) => {
             category: req.params.categoryId
         };
     }
-    let result = await SubcategoryModel.find(filter);
+    let result = await SubcategoryModel.find(filter)
+    .populate('category');
 
     const language = req.headers.language || 'arabic';
     result = result.map(subcategory => ({
@@ -55,7 +56,8 @@ export const getSubCategory = catchAsyncError(async (req, res, next) => {
     const {
         id
     } = req.params;
-    let result = await SubcategoryModel.findById(id);
+    let result = await SubcategoryModel.findById(id)
+    .populate('category');
     if (!result) return next(new AppError(`Subcategory not found`, 404));
 
     const language = req.headers.language || 'arabic';

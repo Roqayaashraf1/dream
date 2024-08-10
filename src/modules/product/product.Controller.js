@@ -63,7 +63,13 @@ export const createproduct = catchAsyncError(async (req, res) => {
 });
 
 export const getAllproducts = catchAsyncError(async (req, res) => {
-  let apiFeatures = new APIFeatures(productModel.find(), req.query)
+  let apiFeatures = new APIFeatures(
+    productModel.find()
+      .populate('category') 
+      .populate('Subcategory') 
+      .populate('author'), 
+    req.query
+  )
     .paginate()
     .filter()
     .selectedFields()
@@ -71,9 +77,7 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
     .sort();
 
   let result = await apiFeatures.mongooseQuery;
-  const {
-    currency
-  } = req.headers;
+  const { currency } = req.headers;
 
   try {
     const convertedProducts = await convertPrices(result, currency);
@@ -85,16 +89,20 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Error converting currency",
-      error
+      error,
     });
   }
 });
+
 
 export const getproduct = catchAsyncError(async (req, res, next) => {
   const {
     id
   } = req.params;
-  let result = await productModel.findById(id);
+  let result = await productModel.findById(id)
+    .populate('category')
+    .populate('Subcategory')
+    .populate('author');
   if (!result) return next(new AppError("Product not found", 404));
 
   const {
@@ -104,7 +112,10 @@ export const getproduct = catchAsyncError(async (req, res, next) => {
 
   res.json({
     message: "success",
-    result: convertedProduct[0]
+    result: convertedProduct[0],
+    category: result.category,
+    subcategory: result.Subcategory,
+    author: result.author
   });
 });
 

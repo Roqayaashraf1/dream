@@ -15,12 +15,15 @@ import {
   orderModel
 } from "../../../dataBase/models/order.model.js";
 import sendEmail from "../../utilities/sendEmail.js";
+import { userModel } from "../../../dataBase/models/user.model.js";
 export const createCashOrder = catchAsyncError(async (req, res, next) => {
   const cart = await cartModel.findById(req.params.id).populate("cartItems.product");
   if (!cart) return next(new AppError("Cart not found", 404));
+  const user = await userModel.findById(req.user._id);
+  if (!user) return next(new AppError("User not found", 404));
 
   const { currency } = req.headers;
-  const shippingAddress = req.body.shippingAddress;
+  const {shippingAddress} = req.body;
   const totalPriceExchanged = cart.totalPriceExchanged;
   const cartItemsWithExchange = cart.cartItems.map((item) => ({
     product: item.product._id,
@@ -57,7 +60,7 @@ export const createCashOrder = catchAsyncError(async (req, res, next) => {
     const emailSubject = "Your Order Details";
     const emailMessage = `
       <h1>Order Confirmation</h1>
-      <p>Thank you for your order!</p>
+      <p>Thank you for your order, ${user.name}</p>
       <p><strong>Total Price </strong> ${totalPriceExchanged.toFixed(2)} ${currency}</p>
       <p><strong>Shipping Address:</strong><br>
         Street: ${street}<br>
@@ -111,10 +114,22 @@ export const getSpecificOrder = catchAsyncError(async (req, res, next) => {
 });
 
 export const getAllOrders = catchAsyncError(async (req, res, next) => {
-  let orders = await orderModel.find().populate("cartItems.product");
+
+  let orders = await orderModel.find()
+    .populate({
+      path: 'cartItems.product' 
+    })
+    .populate({
+      path: 'user',
+      select: 'name email' 
+    });
 
   const ordersWithExchange = orders.map((order) => ({
     ...order._doc,
+    user: {
+      name: order.user.name,
+      email: order.user.email
+    },
     cartItems: order.cartItems.map((item) => ({
       ...item._doc,
       priceExchanged: item.priceExchanged,

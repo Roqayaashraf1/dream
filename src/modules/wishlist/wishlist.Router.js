@@ -8,8 +8,8 @@ wishlistrouter.use(protectRoutes, allowedTo("user"), checkCurrency);
 
 wishlistrouter.route('/:product')
   .post(wishlist.addToWishlist)
-wishlistrouter.route('/')
-  .delete(wishlist.removeFromWishlist)
-  .get(wishlist.getAllWishlist);
+// wishlistrouter.route('/')
+//   .delete(wishlist.removeFromWishlist)
+//   .get(wishlist.getAllWishlist);
 
 export { wishlistrouter };

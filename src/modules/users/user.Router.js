@@ -4,9 +4,6 @@ import { allowedTo, protectRoutes } from "../auth/auth.Controller.js";
 
 const userRouter = express.Router();
 
-userRouter.route("/").post(protectRoutes,
-  allowedTo("admin"),user.createuser).get(protectRoutes,
-    allowedTo("admin"),user.getAlluser);
 userRouter
   .route("/:id")
   .get(protectRoutes,
