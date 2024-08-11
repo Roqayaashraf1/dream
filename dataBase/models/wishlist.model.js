@@ -13,6 +13,7 @@ const wishlistSchema = mongoose.Schema({
     },
     title: String,
     price: Number,
+    image: String,
     priceExchanged:Number
   }, ],
 });
