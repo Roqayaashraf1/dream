@@ -58,76 +58,27 @@ export const addToWishlist = catchAsyncError(async (req, res, next) => {
     next(error);
   }
 });
+export const getLoggedUserWishlist = catchAsyncError(async (req, res, next) => {
+  
+  let cart = await wishlistModel
+    .findOne({ user: req.user._id })
+    .populate('wishlistItems.product'
+    );
+
+  if (!cart) return next(new AppError("wishlist not found", 404));
+  res.status(200).json({ message: "success", cart });
+});
 
 
+export const removeProductFromWishlist = catchAsyncError(async (req, res, next) => {
 
-// export const removeFromWishlist = catchAsyncError(async (req, res, next) => {
-//   try {
-//     const {
-//       product
-//     } = req.body;
+  let result = await wishlistModel.findOneAndUpdate(
+    { user: req.user._id },
+    { $pull: {wishlistItems : { _id: req.params.product } } },
+    { new: true }
+  );
+  if (!result) return next(new AppError(`Item not found`, 401));
+  await result.save();
 
-//     if (!product) {
-//       return next(new AppError('Product ID is required', 400));
-//     }
-
-//     const result = await userModel.findByIdAndUpdate(
-//       req.user._id, {
-//         $pull: {
-//           wishlist: product
-//         }
-//       }, {
-//         new: true
-//       }
-//     )
-
-//     if (!result) {
-//       return next(new AppError('User not found', 404));
-//     }
-
-//     res.json({
-//       message: 'success',
-//       result: result.wishlist
-//     });
-//   } catch (error) {
-//     console.error('Error removing from wishlist:', error);
-//     next(error);
-//   }
-// });
-
-
-// export const getAllWishlist = catchAsyncError(async (req, res, next) => {
-//   const {
-//     currency
-//   } = req.headers;
-
-//   let user = await userModel.findOne({
-//     _id: req.user._id
-//   })
-//   if (!user) return next(new AppError(`User not found`, 404));
-
-//   if (currency && currency !== "KWD") {
-//     try {
-//       const exchangeRate = await getExchangeRate(currency);
-//       const wishlist = user.wishlist.map(item => ({
-//         ...item._doc,
-//         price: (item.price * exchangeRate).toFixed(2),
-//         currency,
-//       }));
-//       return res.json({
-//         message: "success",
-//         result: wishlist
-//       });
-//     } catch (error) {
-//       return res.status(500).json({
-//         message: "Error converting currency",
-//         error
-//       });
-//     }
-//   }
-
-//   res.json({
-//     message: "success",
-//     result: user.wishlist
-//   });
-// });
+  res.json({ message: "success", result });
+});
