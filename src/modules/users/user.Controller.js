@@ -42,10 +42,11 @@ export const changeUserPassword = catchAsyncError(async (req, res, next) => {
   let {
     id
   } = req.params;
-  req.body.passwordChangedAt = Date.now();
+  const {  password } = req.body;
   let result = await userModel.findByIdAndUpdate(id, req.body, {
     new: true
   });
+  req.body.passwordChangedAt = Date.now();
   !result && next(new AppError(`user not found`, 404));
   result && res.json({
     message: "success",

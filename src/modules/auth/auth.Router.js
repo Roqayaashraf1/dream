@@ -9,6 +9,6 @@ authRouter.post("/signup", checkCurrency, auth.signup);
 authRouter.post("/signin",checkCurrency, auth.signin);
 authRouter.post("/logout",checkCurrency,auth.logout);
 authRouter.patch("/forgetpassword",auth.forgetPassword)
-authRouter.patch('/resetpassword/:token',checkCurrency,auth.resetPasword)
+authRouter.patch('/resetpassword',auth.resetPassword)
 
 export { authRouter };

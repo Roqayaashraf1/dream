@@ -32,8 +32,12 @@ export const signin = catchAsyncError(async (req, res, next) => {
   let isFound = await userModel.findOne({
     email
   });
+  if (!isFound) {
+    return next(new AppError("Incorrect email or password", 401));
+  }
+
   const match = await bcrypt.compare(password, isFound.password);
-  if (isFound && match) {
+  if (  match) {
     let token = Jwt.sign({
         name: isFound.name,
         userId: isFound._id,
@@ -102,28 +106,34 @@ export const allowedTo = (...roles) => {
   });
 };
 
-export const resetPasword = catchAsyncError(async (req, res, next) => {
-  let {
-    token
-  } = req.headers;
-  const {
-    newpassword
-  } = req.body;
-  if (!token) return next(new AppError("Token not provided", 401));
-  let decoded = Jwt.verify(token, "mynameisRoqaya");
-  if (!decoded?._id) {
-    return next(new AppError("Token decodin fail", 400));
+export const resetPassword = catchAsyncError(async (req, res, next) => {
+  const token = req.query.token;  
+  const { password } = req.body;  
+
+  if (!token) {
+    return next(new AppError("Token must be provided", 400));
   }
-  const hashpassword = bcrypt.hashSync(newpassword, 7);
-  const user = await userModel.findOneAndUpdate({
-    _id: decoded._id,
-    password: hashpassword,
-  });
+
+  let decoded;
+  try {
+    decoded = Jwt.verify(token, "mynameisRoqaya");
+    console.log("Token decoded successfully:", decoded);
+  } catch (err) {
+    console.error("Token verification failed:", err.message);
+    return next(new AppError("Invalid or expired token", 400));
+  }
+
+  const user = await userModel.findById(decoded.userId);
   if (!user) {
-    return next(new AppError("fail to reset", 400));
+    console.error("User not found for ID:", decoded.userId);
+    return next(new AppError("User not found", 404));
   }
-  res.status(200).json({
-    message: "done"
+  user.password = password;
+  user.passwordChangedAt = Date.now();
+  await user.save();
+
+  res.json({
+    message: "Password has been reset successfully"
   });
 });
 export const protectRoutes = catchAsyncError(async (req, res, next) => {
