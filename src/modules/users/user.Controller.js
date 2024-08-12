@@ -9,6 +9,7 @@ import {
 } from "../../../dataBase/models/user.model.js";
 import * as factory from "../handlers/factor.handler.js";
 
+import bcrypt from "bcrypt";
 
 export const getuser = catchAsyncError(async (req, res, next) => {
   const {
@@ -39,17 +40,28 @@ export const Updateuser = catchAsyncError(async (req, res, next) => {
 export const deleteusers = factory.deleteOne(userModel);
 // change password by the new password
 export const changeUserPassword = catchAsyncError(async (req, res, next) => {
-  let {
-    id
-  } = req.params;
-  const {  password } = req.body;
-  let result = await userModel.findByIdAndUpdate(id, req.body, {
-    new: true
-  });
-  req.body.passwordChangedAt = Date.now();
-  !result && next(new AppError(`user not found`, 404));
-  result && res.json({
-    message: "success",
-    result
+  const { id } = req.params;
+  const { oldPassword, newPassword } = req.body;
+  const user = await userModel.findById(id);
+  if (!user) {
+    return next(new AppError(`User not found`, 404));
+  }
+  const isMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isMatch) {
+    return next(new AppError("Old password is incorrect", 401));
+  }
+  const result = await userModel.findByIdAndUpdate(
+    id,
+    {
+      password: newPassword,
+      passwordChangedAt: Date.now(),
+    },
+    { new: true }
+  );
+
+  res.json({
+    message: "Password updated successfully",
+    result,
   });
 });
+
