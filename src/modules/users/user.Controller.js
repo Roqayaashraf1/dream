@@ -40,9 +40,16 @@ export const Updateuser = catchAsyncError(async (req, res, next) => {
 export const deleteusers = factory.deleteOne(userModel);
 // change password by the new password
 export const changeUserPassword = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  const { oldPassword, newPassword } = req.body;
-  const user = await userModel.findById(id);
+
+  const {
+    oldPassword,
+    newPassword
+  } = req.body;
+  let user = await userModel
+    .findById(
+      req.user._id
+    )
+    console.log(user)
   if (!user) {
     return next(new AppError(`User not found`, 404));
   }
@@ -51,12 +58,12 @@ export const changeUserPassword = catchAsyncError(async (req, res, next) => {
     return next(new AppError("Old password is incorrect", 401));
   }
   const result = await userModel.findByIdAndUpdate(
-    id,
-    {
+    user._id, {
       password: newPassword,
       passwordChangedAt: Date.now(),
-    },
-    { new: true }
+    }, {
+      new: true
+    }
   );
 
   res.json({
@@ -64,4 +71,3 @@ export const changeUserPassword = catchAsyncError(async (req, res, next) => {
     result,
   });
 });
-

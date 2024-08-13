@@ -13,7 +13,7 @@ userRouter
   .put(protectRoutes,
     allowedTo("admin","user"),user.Updateuser);
 
-userRouter.patch("/changeuserpassword/:id",protectRoutes,
+userRouter.patch("/changeuserpassword",protectRoutes,
   allowedTo("user"), user.changeUserPassword);
 
 export { userRouter };
