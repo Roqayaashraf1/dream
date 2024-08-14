@@ -17,7 +17,7 @@ import { countryrouter } from "./src/modules/country/country.router.js";
 import { SubcategoryRouter } from "./src/modules/subcategory/subcategory.router.js";
 import { AppError } from "./src/utilities/appError.js";
 const app = express();
-const port = 3000;
+const port = 3500;
 app.use(express.json());
 app.use(cors());
 app.use(
@@ -28,6 +28,8 @@ app.use(
     cookie: { secure: true }, // Set secure to true if using HTTPS
   })
 );
+
+
 app.use(morgan("dev"));
 app.use(express.static("uploads"));
 app.use("/api/v1/users", userRouter);
