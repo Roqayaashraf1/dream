@@ -17,9 +17,9 @@ SubcategoryRouter.route('/').post(protectRoutes,
 
 SubcategoryRouter.route('/:id')
     .get(checkCurrency, Subcategory.getSubCategory)
-    .delete(protectRoutes,
-        allowedTo("admin"), Subcategory.updateSubCategory)
     .put(protectRoutes,
+        allowedTo("admin"), Subcategory.updateSubCategory)
+    .delete(protectRoutes,
         allowedTo("admin"), Subcategory.deleteSubCategory)
 
 

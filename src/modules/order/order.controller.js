@@ -138,3 +138,19 @@ export const getAllOrders = catchAsyncError(async (req, res, next) => {
 
   res.status(200).json({ message: "success", orders: ordersWithExchange });
 });
+
+
+export const getOrder = catchAsyncError(async (req, res, next) => {
+  const {
+      id
+  } = req.params;
+  let result = await orderModel.findById(id).populate({
+    path: 'cartItems.product' 
+  })
+
+  if (!result) return next(new AppError(`Order not found`, 404));
+  res.json({
+      message: "success",
+      result
+  });
+});

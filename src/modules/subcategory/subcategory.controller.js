@@ -81,13 +81,11 @@ export const updateSubCategory = catchAsyncError(async (req, res, next) => {
     } = req.params;
     const {
         englishname,
-        arabicname,
-        category
+        arabicname
     } = req.body;
     let updateData = {
         englishname,
         arabicname,
-        category,
         slug: slugify(englishname)
     };
     let result = await SubcategoryModel.findByIdAndUpdate(id, updateData, {

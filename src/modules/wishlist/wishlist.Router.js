@@ -14,7 +14,7 @@ wishlistrouter.use(protectRoutes, allowedTo("user"), checkCurrency);
 wishlistrouter.route('/:product')
   .delete(wishlist.removeProductFromWishlist)
   .post(wishlist.addToWishlist)
-  
+
 wishlistrouter.route('/')
   .get(wishlist.getLoggedUserWishlist);
 

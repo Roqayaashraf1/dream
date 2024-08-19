@@ -60,7 +60,13 @@ const upload = multer({
 });
 
 const productRouter = express.Router();
-
+productRouter.route("/productwithoffer")
+  .post(
+    upload.single("image"),
+    protectRoutes,
+    allowedTo("admin"),
+    createproduct
+  )
 productRouter.route("/")
   .post(
     upload.single("image"),

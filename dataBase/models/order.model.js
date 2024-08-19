@@ -6,6 +6,7 @@ const orderSchema = mongoose.Schema(
     cartItems: [
       {
         product: { type: mongoose.Types.ObjectId, ref: "product" },
+        name:String,
         quantity: Number,
         price: Number,
         priceExchanged: Number

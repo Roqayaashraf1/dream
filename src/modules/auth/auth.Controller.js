@@ -44,7 +44,7 @@ export const signin = catchAsyncError(async (req, res, next) => {
         role: isFound.role
       },
       "mynameisRoqaya", {
-        expiresIn: "3d"
+        expiresIn: "1d"
       }
     );
     return res.json({

@@ -16,6 +16,7 @@ import {
   getExchangeRate
 } from "../../utilities/getExchangeRate.js";
 import * as factory from "../handlers/factor.handler.js";
+import { OfferModel } from "../../../dataBase/models/offer.model.js";
 
 
 const convertPrices = async (products, currency) => {
@@ -49,9 +50,12 @@ export const createproduct = catchAsyncError(async (req, res) => {
     papersnumber,
     Subcategory
   } = req.body;
-  
+
   req.body.slug = slugify(title);
+
   let result = new productModel(req.body);
+  console.log(result)
+
   await result.save();
 
   const {
@@ -67,12 +71,12 @@ export const createproduct = catchAsyncError(async (req, res) => {
 
 export const getAllproducts = catchAsyncError(async (req, res) => {
   let apiFeatures = new APIFeatures(
-    productModel.find()
-      .populate('category') 
-      .populate('Subcategory') 
-      .populate('author'), 
-    req.query
-  )
+      productModel.find()
+      .populate('category')
+      .populate('Subcategory')
+      .populate('author'),
+      req.query
+    )
     .paginate()
     .filter()
     .selectedFields()
@@ -80,7 +84,9 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
     .sort();
 
   let result = await apiFeatures.mongooseQuery;
-  const { currency } = req.headers;
+  const {
+    currency
+  } = req.headers;
 
   try {
     const convertedProducts = await convertPrices(result, currency);
@@ -127,13 +133,14 @@ export const UpdateProduct = catchAsyncError(async (req, res, next) => {
     id
   } = req.params;
   const {
-    title
+    title,
+    price,
+    quantity,
+    description
   } = req.body;
   let result = await productModel.findByIdAndUpdate(
-    id, {
-      title,
-      slug: slugify(title)
-    }, {
+    id, 
+      req.body, {
       new: true
     }
   );
@@ -178,3 +185,7 @@ export const search = catchAsyncError(async (req, res) => {
     });
   }
 });
+
+
+
+
