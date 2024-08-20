@@ -25,12 +25,10 @@ import {
   checkCurrency
 } from "../country/country.controller.js";
 
-// Convert module URL to file path
+
 const __filename = fileURLToPath(
   import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Ensure the upload directory exists
 const uploadDir = path.join(__dirname, "/uploads/product");
 fs.mkdirSync(uploadDir, {
   recursive: true
@@ -60,13 +58,6 @@ const upload = multer({
 });
 
 const productRouter = express.Router();
-productRouter.route("/productwithoffer")
-  .post(
-    upload.single("image"),
-    protectRoutes,
-    allowedTo("admin"),
-    createproduct
-  )
 productRouter.route("/")
   .post(
     upload.single("image"),
