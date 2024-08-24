@@ -1,4 +1,4 @@
-import { required } from "joi";
+
 import mongoose from "mongoose";
 const popupSchema = mongoose.Schema({
   user: {
@@ -12,7 +12,7 @@ const popupSchema = mongoose.Schema({
   image: String,
   title: {
     type:String,
-    required:true
+    required:[true,"title is required"]
   }
 }, {
   timestamps: true
