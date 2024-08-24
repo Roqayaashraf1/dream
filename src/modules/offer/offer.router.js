@@ -1,9 +1,10 @@
 import express from "express";
-import { createoffer } from "./offer.controller.js";
+import { createoffer, deleteOffer, getAllOffers } from "./offer.controller.js";
 import { allowedTo, protectRoutes } from "../auth/auth.Controller.js";
 
 const offerRouter = express.Router();
-offerRouter.route("/").post(protectRoutes, allowedTo("admin"), createoffer);
-
+offerRouter.route("/").post(protectRoutes, allowedTo("admin"), createoffer)
+.get(getAllOffers);
+offerRouter.route("/:id").delete(protectRoutes, allowedTo("admin"), deleteOffer);
 
 export { offerRouter };

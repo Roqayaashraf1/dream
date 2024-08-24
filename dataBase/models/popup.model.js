@@ -1,3 +1,4 @@
+import { required } from "joi";
 import mongoose from "mongoose";
 const popupSchema = mongoose.Schema({
   user: {
@@ -9,14 +10,12 @@ const popupSchema = mongoose.Schema({
     ref: "product"
   },
   image: String,
-  title: String
+  title: {
+    type:String,
+    required:true
+  }
 }, {
   timestamps: true
 });
-popupSchema.pre('save', function (next) {
-  if (this.image) {
-    this.image = "http://localhost:3500/popup/" + this.image;
-  }
-  next();
-});
+
 export const popupModel = mongoose.model("popup", popupSchema);

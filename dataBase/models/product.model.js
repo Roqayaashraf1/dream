@@ -66,11 +66,6 @@ const productSchema = mongoose.Schema(
   },
   { timestamps: true }
 );
-productSchema.pre('save', function(next) {
-  if (this.image) {
-    this.image = "http://localhost:3500/products/" + this.image;
-  }
-  next();
-});
+
 
 export const productModel = mongoose.model("product", productSchema);

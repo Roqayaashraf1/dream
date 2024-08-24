@@ -146,7 +146,10 @@ export const getOrder = catchAsyncError(async (req, res, next) => {
   } = req.params;
   let result = await orderModel.findById(id).populate({
     path: 'cartItems.product' 
-  })
+  }).populate({
+    path: 'user',
+    select: 'name email' 
+  });
 
   if (!result) return next(new AppError(`Order not found`, 404));
   res.json({

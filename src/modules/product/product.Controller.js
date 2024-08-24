@@ -16,7 +16,6 @@ import {
   getExchangeRate
 } from "../../utilities/getExchangeRate.js";
 import * as factory from "../handlers/factor.handler.js";
-import { OfferModel } from "../../../dataBase/models/offer.model.js";
 
 
 const convertPrices = async (products, currency) => {
@@ -29,9 +28,12 @@ const convertPrices = async (products, currency) => {
     return products.map((item) => ({
       ...item._doc,
       price: (item.price * exchangeRate).toFixed(2),
+      priceAfterDiscount: (item.priceAfterDiscount * exchangeRate).toFixed(2),
       currency,
-      createdAt: new Date(item.createdAt).toLocaleString(),
+      createdAt: new Date(item.createdAt).toLocaleString()
     }));
+    
+   
   } catch (error) {
     throw new Error("Error converting currency");
   }
@@ -52,7 +54,7 @@ export const createproduct = catchAsyncError(async (req, res) => {
   } = req.body;
 
   req.body.slug = slugify(title);
-
+  req.body.priceAfterDiscount = price;
   let result = new productModel(req.body);
   console.log(result)
 
