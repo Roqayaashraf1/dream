@@ -1,5 +1,8 @@
 import slugify from "slugify";
 import {
+    productModel
+  } from "../../../dataBase/models/product.model.js";
+import {
     catchAsyncError
 } from "../../middleWare/catchAsyncError.js";
 import {
@@ -37,7 +40,7 @@ export const getAllSubCategories = catchAsyncError(async (req, res) => {
         };
     }
     let result = await SubcategoryModel.find(filter)
-    .populate('category');
+    .populate('category')
 
     const language = req.headers.language || 'arabic';
     result = result.map(subcategory => ({
@@ -58,6 +61,8 @@ export const getSubCategory = catchAsyncError(async (req, res, next) => {
     } = req.params;
     let result = await SubcategoryModel.findById(id)
     .populate('category');
+    const products = await productModel.find({ Subcategory: id });
+    
     if (!result) return next(new AppError(`Subcategory not found`, 404));
 
     const language = req.headers.language || 'arabic';
@@ -70,7 +75,8 @@ export const getSubCategory = catchAsyncError(async (req, res, next) => {
 
     res.json({
         message: "success",
-        result
+        result,
+        products
     });
 });
 

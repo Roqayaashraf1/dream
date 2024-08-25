@@ -1,11 +1,24 @@
 import mongoose from "mongoose";
-const categorySchema = mongoose.Schema(
-  {
-    englishname: { type: String, required: true },
-  arabicname: { type: String, required: true },
-  englishslug: { type: String },
-  arabicslug: { type: String }
+const categorySchema = mongoose.Schema({
+  product: {
+    type: mongoose.Types.ObjectId,
+    ref: "product"
   },
-  { timestamps: true }
-);
+  englishname: {
+    type: String,
+    required: true
+  },
+  arabicname: {
+    type: String,
+    required: true
+  },
+  englishslug: {
+    type: String
+  },
+  arabicslug: {
+    type: String
+  }
+}, {
+  timestamps: true
+});
 export const categoryModel = mongoose.model("category", categorySchema);

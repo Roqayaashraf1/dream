@@ -12,6 +12,9 @@ import {
 import {
   catchAsyncError
 } from "../../middleWare/catchAsyncError.js";
+import {
+  productModel
+} from "../../../dataBase/models/product.model.js";
 export const createCategory = catchAsyncError(async (req, res) => {
   try {
     const {
@@ -76,31 +79,34 @@ export const getAllCategories = catchAsyncError(async (req, res, next) => {
 
 export const getCategory = catchAsyncError(async (req, res, next) => {
   try {
-    const {
-      id
-    } = req.params;
+    const { id } = req.params;
     const language = (req.headers['accept-language'] || 'arabic').toLowerCase();
     const languageField = language.includes('english') ? 'englishname' : 'arabicname';
+    
     console.log(`Using language field: ${languageField}`);
-    const query = categoryModel.findById(id).select(`${languageField} slug`);
-
-    console.log('Query details:', query.getQuery ? query.getQuery() : query);
-
-    let result = await query;
-    console.log('Query result:', result);
-
-    if (!result) {
+    
+    const category = await categoryModel.findById(id).select(`${languageField} slug`);
+    
+    console.log('Category details:', category);
+    
+    if (!category) {
       return next(new AppError('Category not found', 404));
     }
-
+    
+    const products = await productModel.find({ category: id });
+    
+    console.log('Products under this category:', products);
+    
     res.json({
       message: 'success',
-      result
+      category,
+      products
     });
   } catch (error) {
     next(error);
   }
 });
+
 
 export const UpdateCategories = catchAsyncError(async (req, res, next) => {
   const {
