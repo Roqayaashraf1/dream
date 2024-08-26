@@ -5,7 +5,6 @@ import {
 // import {categoryRouter} from './src/modules/category/category.Router.js'
 import morgan from "morgan";
 import cors from "cors";
-import session from "express-session";
 import {
   userRouter
 } from "./src/modules/users/user.Router.js";

@@ -11,8 +11,7 @@ const popupSchema = mongoose.Schema({
   },
   image: String,
   title: {
-    type:String,
-    required:[true,"title is required"]
+    type:String
   }
 }, {
   timestamps: true

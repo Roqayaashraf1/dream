@@ -7,11 +7,27 @@ import { cartModel } from '../../../dataBase/models/cart.model.js';
 async function calcTotalPrice(cartItems, currency) {
   let totalPrice = 0;
   let totalPriceExchanged = 0;
+  let totalItems = 0;
   const exchangeRate = await getExchangeRate(currency);
-  const newItems = cartItems.map((item) => {
-    const itemTotalPrice = item.priceAfterDiscount * item.quantity;
 
+  const sortedItems = cartItems.sort((a, b) => a.priceAfterDiscount - b.priceAfterDiscount);
+
+  let discountedItemsCount = 0;
+  const numOfDiscountedItems = Math.floor(sortedItems.reduce((sum, item) => sum + item.quantity, 0) / 3);
+
+  const newItems = sortedItems.map((item) => {
+    totalItems += item.quantity;
+    let paidQuantity = item.quantity;
+
+    if (discountedItemsCount < numOfDiscountedItems) {
+      const itemsToDiscount = Math.min(item.quantity, numOfDiscountedItems - discountedItemsCount);
+      paidQuantity -= itemsToDiscount;
+      discountedItemsCount += itemsToDiscount;
+    }
+
+    const itemTotalPrice = item.priceAfterDiscount * paidQuantity;
     const itemTotalPriceExchanged = itemTotalPrice * exchangeRate;
+
     totalPrice += itemTotalPrice;
     totalPriceExchanged += itemTotalPriceExchanged;
 
@@ -78,7 +94,6 @@ export const addToCart = catchAsyncError(async (req, res, next) => {
   cart.cartItems = newItems;
   cart.totalPrice = totalPrice;
   cart.totalPriceExchanged = totalPriceExchanged;
-  console.log(cart)
   await cart.save();
 
   res.json({ message: "success", cart });
