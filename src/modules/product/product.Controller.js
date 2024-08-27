@@ -93,7 +93,6 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
     const convertedProducts = await convertPrices(result, currency);
     res.json({
       message: "success",
-      page: apiFeatures.page,
       result: convertedProducts,
     });
   } catch (error) {
