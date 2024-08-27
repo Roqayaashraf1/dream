@@ -50,7 +50,6 @@ export const getAllCategories = catchAsyncError(async (req, res, next) => {
     const slugField = language === 'english' || language.startsWith('en') ? 'englishslug' : 'arabicslug';
 
     let apiFeatures = new APIFeatures(categoryModel.find(), req.query)
-      .paginate()
       .filter()
       .selectedFields(`${languageField} ${slugField}`)
       .search()

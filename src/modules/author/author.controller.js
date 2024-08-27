@@ -28,7 +28,6 @@ export const createauthor = catchAsyncError(async (req, res, next) => {
 export const getAllAuthor = catchAsyncError(async (req, res, next) => {
     try {
       let apiFeatures = new APIFeatures(authorModel.find(), req.query)
-        .paginate()
         .filter()
         .selectedFields()
         .search()

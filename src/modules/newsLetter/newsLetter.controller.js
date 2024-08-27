@@ -29,7 +29,6 @@ export const getAllEmails = catchAsyncError(async (req, res) => {
     try {
         let apiFeatures = new APIFeatures(
                 newsLetterModel.find(), req.query)
-            .paginate()
             .filter()
             .selectedFields()
             .search()

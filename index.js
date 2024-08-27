@@ -71,7 +71,6 @@ app.use("/api/v1/newsletter", newsLetterRouter);
 app.use("/api/v1/offers", offerRouter);
 app.use("/api/v1/popup", popupRouter);
 app.all("*", (req, res, next) => {
-  //res.json({Message:`can't find this route: ${req.originalUrl}`})
   next(new AppError(`can't find this route: ${req.originalUrl}`, 404));
 });
 app.use(globalErrorMiddleware);

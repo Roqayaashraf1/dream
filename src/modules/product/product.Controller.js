@@ -79,7 +79,6 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
       .populate('author'),
       req.query
     )
-    .paginate()
     .filter()
     .selectedFields()
     .search()
@@ -162,7 +161,6 @@ export const UpdateProduct = catchAsyncError(async (req, res, next) => {
 export const deleteproduct = factory.deleteOne(productModel);
 export const search = catchAsyncError(async (req, res) => {
   let apiFeatures = new APIFeatures(productModel.find(), req.query)
-    .paginate()
     .filter()
     .selectedFields()
     .search()
