@@ -7,9 +7,9 @@ export class APIFeatures {
   paginate() {
     let page = this.queryString.page * 1 || 1;
     if (page <= 0) page = 1; 
-    let skip = (page - 1) * 5;
+    let skip = (page - 1) * 20;
     this.page = page;
-    this.mongooseQuery = this.mongooseQuery.skip(skip).limit(5); 
+    this.mongooseQuery = this.mongooseQuery.skip(skip).limit(20); 
     return this;
   }
 
