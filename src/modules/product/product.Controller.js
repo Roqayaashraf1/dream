@@ -78,7 +78,7 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
       .populate('Subcategory')
       .populate('author'),
       req.query
-    )
+    ).paginate()
     .filter()
     .selectedFields()
     .search()
@@ -92,7 +92,7 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
   try {
     const convertedProducts = await convertPrices(result, currency);
     res.json({
-      message: "success",
+      message: "success",page: apiFeatures.page,
       result: convertedProducts,
     });
   } catch (error) {
