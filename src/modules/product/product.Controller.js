@@ -73,26 +73,29 @@ export const createproduct = catchAsyncError(async (req, res) => {
 
 export const getAllproducts = catchAsyncError(async (req, res) => {
   let apiFeatures = new APIFeatures(
-      productModel.find()
+    productModel.find()
       .populate('category')
       .populate('Subcategory')
       .populate('author'),
-      req.query
-    ).paginate()
-    .filter()
-    .selectedFields()
-    .search()
-    .sort();
+    req.query
+  ).filter()
+    .search();
+  const totalProducts = await productModel.countDocuments(apiFeatures.mongooseQuery.getFilter());
+
+  const totalPages = Math.ceil(totalProducts / 20);
+  apiFeatures.paginate().sort().selectedFields();
 
   let result = await apiFeatures.mongooseQuery;
-  const {
-    currency
-  } = req.headers;
+
+  const { currency } = req.headers;
 
   try {
     const convertedProducts = await convertPrices(result, currency);
     res.json({
-      message: "success",page: apiFeatures.page,
+      message: "success",
+      totalProducts,
+      totalPages,
+      page: apiFeatures.page,
       result: convertedProducts,
     });
   } catch (error) {
@@ -102,6 +105,8 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
     });
   }
 });
+
+
 
 
 export const getproduct = catchAsyncError(async (req, res, next) => {
