@@ -283,7 +283,7 @@ export const callback = catchAsyncError(async (req, res) => {
 
     if (InvoiceStatus === "Paid") {
       // Verify the InvoiceValue matches the order's total price
-      if (InvoiceValue === order.totalPriceExchanged) {
+      if (InvoiceValue === order.totalPrice) {
         // Update the order status
         order.isPaid = true;  // Mark the order as paid
         order.paidAt = new Date();  // Record the time of payment
