@@ -141,9 +141,12 @@ export const protectRoutes = catchAsyncError(async (req, res, next) => {
     token
   } = req.headers;
 
+ if(req._parsedOriginalUrl?.pathname =="/api/v1/orders/callback"){
+  console.log(req.body)
+  return next()
+ }
   if (!token) return next(new AppError("Token not provided", 401));
   const authHeader = token.split('.')[1];
-  console.log(token)
   if (tokenBlacklist.has(authHeader)) {
     return next(new AppError("Token has been invalidated", 401));
   }

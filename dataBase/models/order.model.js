@@ -13,7 +13,7 @@ const orderSchema = mongoose.Schema(
       },
     ],
     totalOrderPrice: Number,
-
+  
     totalPriceExchanged: Number,
     currency: String,
     shippingAddress: {
@@ -28,7 +28,7 @@ const orderSchema = mongoose.Schema(
     },
     PaymentMethod: {
       type: String,
-      enum: ["card", "cash"],
+      enum: ["card", "online"],
       default: "cash",
     },
     isPaied: {
