@@ -37,7 +37,7 @@ export const signin = catchAsyncError(async (req, res, next) => {
   }
 
   const match = await bcrypt.compare(password, isFound.password);
-  if (  match) {
+  if (match) {
     let token = Jwt.sign({
         name: isFound.name,
         userId: isFound._id,
@@ -95,6 +95,7 @@ export const forgetPassword = catchAsyncError(async (req, res, next) => {
 
 export const allowedTo = (...roles) => {
   return catchAsyncError(async (req, res, next) => {
+
     if (!roles.includes(req.user.role))
       return next(
         new AppError(
@@ -107,8 +108,10 @@ export const allowedTo = (...roles) => {
 };
 
 export const resetPassword = catchAsyncError(async (req, res, next) => {
-  const token = req.query.token;  
-  const { password } = req.body;  
+  const token = req.query.token;
+  const {
+    password
+  } = req.body;
 
   if (!token) {
     return next(new AppError("Token must be provided", 400));
@@ -141,10 +144,9 @@ export const protectRoutes = catchAsyncError(async (req, res, next) => {
     token
   } = req.headers;
 
- if(req._parsedOriginalUrl?.pathname =="/api/v1/orders/callback"){
-  console.log(req.body)
-  return next()
- }
+  if (req._parsedOriginalUrl?.pathname == "/api/v1/orders/callback") {
+    return next()
+  }
   if (!token) return next(new AppError("Token not provided", 401));
   const authHeader = token.split('.')[1];
   if (tokenBlacklist.has(authHeader)) {

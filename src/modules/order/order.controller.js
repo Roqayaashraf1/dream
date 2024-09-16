@@ -226,7 +226,7 @@ export const pay = catchAsyncError(async (req, res, next) => {
     Language: "en",
     DisplayCurrencyIna: currency || "KWD",
   };
-
+console.log(paymentData)
   
 
   try {
@@ -250,7 +250,7 @@ export const pay = catchAsyncError(async (req, res, next) => {
 
 export const callback = catchAsyncError(async (req, res) => {
   console.log("Incoming Callback Request:", req.headers);
-  const { paymentId } = req.query;
+  const { paymentId } = req.params;
   
   if (!paymentId) {
     return res.status(400).json({ error: "Payment ID is missing." });
