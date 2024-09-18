@@ -1,19 +1,18 @@
 import mongoose from "mongoose";
 
-const orderSchema = mongoose.Schema(
+const orderSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Types.ObjectId, ref: "user" },
     cartItems: [
       {
         product: { type: mongoose.Types.ObjectId, ref: "product" },
-        name:String,
+        name: String,
         quantity: Number,
         price: Number,
-        priceExchanged: Number
+        priceExchanged: Number,
       },
     ],
     totalOrderPrice: Number,
-  
     totalPriceExchanged: Number,
     currency: String,
     shippingAddress: {
@@ -23,25 +22,28 @@ const orderSchema = mongoose.Schema(
       country: String,
       building: String,
       area: String,
-      floor: Number,       
-      apartment: Number,      
+      floor: Number,
+      apartment: Number,
     },
     PaymentMethod: {
       type: String,
-      enum: ["card", "online"],
-      default: "cash",
+      enum: ["CASH", "ONLINE"],
+      default: "CASH",
     },
-    isPaied: {
-      type: Boolean,
-      default: false,
+    isPaid: {
+      type: String,
+      enum:["PENDING","SUCCESS"],
+      default:"PENDING"
     },
-    paiedAt: Date,
+    paidAt: Date,
     deliveredAt: Date,
     isDelivered: {
       type: Boolean,
       default: false,
     },
-    image: String,
+    invoiceId: String, // This stores the Invoice ID from MyFatoorah
+    invoiceURL:String,
+    paymentId: { type: String },  // This stores the Payment ID from MyFatoorah
   },
   { timestamps: true }
 );

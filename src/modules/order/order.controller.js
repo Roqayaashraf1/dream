@@ -50,7 +50,7 @@ export const createCashOrder = catchAsyncError(async (req, res, next) => {
     currency: currency || "KWD",
     shippingAddress,
     PaymentMethod: req.body.PaymentMethod || "cash",  // Dynamically set from the request
-    isPaied: false,
+    isPaid: "PENDING",
     isDelivered: false,
   });
   await order.save();
@@ -200,13 +200,42 @@ export const getOrder = catchAsyncError(async (req, res, next) => {
 export const pay = catchAsyncError(async (req, res, next) => {
   const cart = await cartModel.findById(req.params.id);
   if (!cart) return next(new AppError("Cart not found", 404));
-  
+
   const user = await userModel.findById(req.user._id);
   if (!user) return next(new AppError("User not found", 404));
 
+  const cartItemsQuery = cart.cartItems.map(item => ({
+    $elemMatch: {
+      product: item.product,
+      quantity: item.quantity,
+      priceExchanged: item.priceExchanged,
+    }
+  }));
+
+  // Check for a pending order
+  const pendingOrder = await orderModel.findOne({
+    user: req.user._id,
+    cartItems: { $all: cartItemsQuery },
+    isPaid: 'PENDING',
+  });
+  if (pendingOrder) {
+    const orderAgeInDays = (Date.now() - pendingOrder.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    
+    if (orderAgeInDays > 2) {
+      await orderModel.findByIdAndDelete(pendingOrder._id);
+
+    } else {
+      return res.json({
+        message: "Pending order found",
+        redirectUrl: pendingOrder.invoiceURL,
+        orderId: pendingOrder._id
+      });
+    }
+  }
+
   const { currency } = req.headers;
   const { shippingAddress } = req.body;
-  const totalPriceExchanged = cart.totalPrice;
+  const totalPrice = cart.totalPrice;
 
   const cartItemsWithExchange = cart.cartItems.map((item) => ({
     product: item.product._id,
@@ -215,29 +244,39 @@ export const pay = catchAsyncError(async (req, res, next) => {
     priceExchanged: item.priceExchanged,
   }));
 
-  // Prepare the payment data
   const paymentData = {
     CustomerName: user.name,
     NotificationOption: "LNK",
-    InvoiceValue: totalPriceExchanged,
+    InvoiceValue: totalPrice,
     CustomerEmail: user.email,
-    CallBackUrl: "http://localhost:3500/api/v1/orders/callback", // Make sure callback is called
+    CallBackUrl: "http://localhost:3500/api/v1/orders/callback",
     ErrorUrl: "http://localhost:3500/api/v1/orders/error",
     Language: "en",
     DisplayCurrencyIna: currency || "KWD",
   };
-console.log(paymentData)
-  
 
   try {
     const response = await fatoorahServices.sendPayment(paymentData);
-    if (response && response.IsSuccess) {
-      const InvoiceURL = response.Data.InvoiceURL;
 
-      // Redirect the user to the payment page after initiating payment
+    if (response && response.IsSuccess) {
+      const { InvoiceURL, InvoiceId } = response.Data;
+
+      const newOrder = await orderModel({
+        user: req.user._id,
+        cartItems: cartItemsWithExchange,
+        totalPrice,
+        shippingAddress,
+        invoiceId: InvoiceId,
+        invoiceURL: InvoiceURL,
+        createdAt: Date.now(), // Update the createdAt to the current date
+      });
+
+      await newOrder.save();
+
       return res.json({
         message: "Payment initiated successfully",
         redirectUrl: InvoiceURL,
+        orderId: newOrder._id,
       });
     } else {
       return res.status(500).json({ error: "Payment initiation failed." });
@@ -274,7 +313,7 @@ export const callback = catchAsyncError(async (req, res) => {
     console.log("Invoice Value:", InvoiceValue);
 
     // Retrieve the order using InvoiceId or paymentId
-    const order = await orderModel.findOne({ paymentId: InvoiceId });
+    const order = await orderModel.findOne({ invoiceId: InvoiceId });
     console.log("Retrieved Order:", order);
 
     if (!order) {
@@ -285,7 +324,7 @@ export const callback = catchAsyncError(async (req, res) => {
       // Verify the InvoiceValue matches the order's total price
       if (InvoiceValue === order.totalPrice) {
         // Update the order status
-        order.isPaid = true;  // Mark the order as paid
+        order.isPaid = "SUCCESS";  // Mark the order as paid
         order.paidAt = new Date();  // Record the time of payment
         await order.save();
         console.log("Order updated successfully:", order);
@@ -336,6 +375,7 @@ export const error = catchAsyncError(async (req, res, next) => {
     }
     console.log("Handling error with paymentId:", paymentId); // Debugging log
 
+
     try {
       // Prepare the request to get the payment status
       const data = {
@@ -345,6 +385,18 @@ export const error = catchAsyncError(async (req, res, next) => {
 
       // Call the MyFatoorah API to check the payment status
       const response = await fatoorahServices.getPaymentStatus(data);
+      const {InvoiceId} = response.Data;
+      const order = await orderModel.findOne({invoiceId: InvoiceId });
+      console.log("Retrieved Order:", order);
+
+      if (!order) {
+        return res.status(404).json({ error: "Order not found." });
+      }
+      order.isPaid = "PENDING";  // Mark the order as paid
+      order.paidAt = new Date(); 
+
+      order.save();
+
       console.log("Error route payment status response:", response); // Debugging log
       console.log(
         "Error route transaction status response:",
