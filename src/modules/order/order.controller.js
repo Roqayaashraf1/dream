@@ -218,19 +218,14 @@ export const pay = catchAsyncError(async (req, res, next) => {
     cartItems: { $all: cartItemsQuery },
     isPaid: 'PENDING',
   });
-  if (pendingOrder) {
-    const orderAgeInDays = (Date.now() - pendingOrder.createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    
-    if (orderAgeInDays > 2) {
-      await orderModel.findByIdAndDelete(pendingOrder._id);
 
-    } else {
-      return res.json({
-        message: "Pending order found",
-        redirectUrl: pendingOrder.invoiceURL,
-        orderId: pendingOrder._id
-      });
-    }
+  if (pendingOrder) {
+    // If there is a pending order, return its details
+    return res.json({
+      message: "Pending order found",
+      redirectUrl: pendingOrder.invoiceURL,
+      orderId: pendingOrder._id,
+    });
   }
 
   const { currency } = req.headers;

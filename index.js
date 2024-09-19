@@ -2,7 +2,7 @@ import express from "express";
 import {
   dbConnection
 } from "./dataBase/dbConnection.js";
-// import {categoryRouter} from './src/modules/category/category.Router.js'
+import './src/utilities/cronJobs.js'; 
 import morgan from "morgan";
 import cors from "cors";
 import {
