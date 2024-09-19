@@ -289,8 +289,8 @@ export const pay = catchAsyncError(async (req, res, next) => {
 
 export const callback = catchAsyncError(async (req, res) => {
   console.log("Incoming Callback Request:", req.headers);
-  const { paymentId } = req.params;
-  
+  const { paymentId } = req.query;
+
   if (!paymentId) {
     return res.status(400).json({ error: "Payment ID is missing." });
   }
@@ -341,7 +341,7 @@ export const callback = catchAsyncError(async (req, res) => {
         console.log("Product stock updated successfully.");
 
         // Delete the cart after successful payment
-        await cartModel.findByIdAndDelete(order.cart._id);
+        await cartModel.findOneAndDelete({ user: order.user });
         console.log("Cart deleted successfully.");
 
         // Redirect to success page
@@ -361,6 +361,7 @@ export const callback = catchAsyncError(async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 
 

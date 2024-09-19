@@ -12,7 +12,7 @@ const orderSchema = new mongoose.Schema(
         priceExchanged: Number,
       },
     ],
-    totalOrderPrice: Number,
+    totalPrice: Number,
     totalPriceExchanged: Number,
     currency: String,
     shippingAddress: {
