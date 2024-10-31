@@ -2,7 +2,6 @@ import express from "express";
 import {
   callback,
   createCashOrder,
-  error,
   getAllOrders,
   getOrder,
   getSpecificOrder,
@@ -15,6 +14,7 @@ import {
 import {
   checkCurrency
 } from "../country/country.controller.js";
+import { error } from "console";
 
 const orderRouter = express.Router();
 orderRouter.route("/callback").get(callback);

@@ -49,7 +49,7 @@ export const createCashOrder = catchAsyncError(async (req, res, next) => {
     totalPriceExchanged: totalPriceExchanged,
     currency: currency || "KWD",
     shippingAddress,
-    PaymentMethod: req.body.PaymentMethod || "cash",  // Dynamically set from the request
+    PaymentMethod: req.body.PaymentMethod || "cash", // Dynamically set from the request
     isPaid: "PENDING",
     isDelivered: false,
   });
@@ -196,7 +196,6 @@ export const getOrder = catchAsyncError(async (req, res, next) => {
     result
   });
 });
-
 export const pay = catchAsyncError(async (req, res, next) => {
   const cart = await cartModel.findById(req.params.id);
   if (!cart) return next(new AppError("Cart not found", 404));
@@ -204,36 +203,54 @@ export const pay = catchAsyncError(async (req, res, next) => {
   const user = await userModel.findById(req.user._id);
   if (!user) return next(new AppError("User not found", 404));
 
+  // Prepare cart items for comparison
   const cartItemsQuery = cart.cartItems.map(item => ({
-    $elemMatch: {
-      product: item.product,
-      quantity: item.quantity,
-      priceExchanged: item.priceExchanged,
-    }
+    product: item.product.toString(),
+    quantity: item.quantity,
+    priceExchanged: item.priceExchanged,
   }));
 
-  // Check for a pending order
+  // Find a pending order for the user
   const pendingOrder = await orderModel.findOne({
     user: req.user._id,
-    cartItems: { $all: cartItemsQuery },
     isPaid: 'PENDING',
   });
 
   if (pendingOrder) {
-    // If there is a pending order, return its details
-    return res.json({
-      message: "Pending order found",
-      redirectUrl: pendingOrder.invoiceURL,
-      orderId: pendingOrder._id,
+    // Check if cart items in the pending order match the current cart items
+    const isCartItemsDifferent = pendingOrder.cartItems.find((item, index) => {
+      return (
+        item.product.toString() !== cartItemsQuery[index].product ||
+        item.quantity !== cartItemsQuery[index].quantity ||
+        item.priceExchanged !== cartItemsQuery[index].priceExchanged
+      );
     });
+
+    // If all items are the same, return the existing invoice URL
+    if (!isCartItemsDifferent) {
+      return res.json({
+        message: "Pending order found",
+        redirectUrl: pendingOrder.invoiceURL,
+        orderId: pendingOrder._id,
+      });
+    } else {
+      // If items are different, delete the pending order
+      await pendingOrder.deleteOne();
+    }
   }
 
-  const { currency } = req.headers;
-  const { shippingAddress } = req.body;
+  // Define necessary details for creating a new order and initiating payment
+  const {
+    currency
+  } = req.headers;
+  const {
+    shippingAddress
+  } = req.body;
   const totalPrice = cart.totalPrice;
 
   const cartItemsWithExchange = cart.cartItems.map((item) => ({
     product: item.product._id,
+    name: item.product.name, // Ensure the product name is included
     quantity: item.quantity,
     price: item.price,
     priceExchanged: item.priceExchanged,
@@ -254,16 +271,21 @@ export const pay = catchAsyncError(async (req, res, next) => {
     const response = await fatoorahServices.sendPayment(paymentData);
 
     if (response && response.IsSuccess) {
-      const { InvoiceURL, InvoiceId } = response.Data;
+      const {
+        InvoiceURL,
+        InvoiceId
+      } = response.Data;
 
-      const newOrder = await orderModel({
+      // Create a new order document
+      const newOrder = new orderModel({
         user: req.user._id,
         cartItems: cartItemsWithExchange,
         totalPrice,
+        totalPriceExchanged: cart.totalPriceExchanged, // assuming the exchange rate is applied
+        currency: currency || "KWD",
         shippingAddress,
         invoiceId: InvoiceId,
-        invoiceURL: InvoiceURL,
-        createdAt: Date.now(), // Update the createdAt to the current date
+        invoiceURL: InvoiceURL
       });
 
       await newOrder.save();
@@ -274,25 +296,38 @@ export const pay = catchAsyncError(async (req, res, next) => {
         orderId: newOrder._id,
       });
     } else {
-      return res.status(500).json({ error: "Payment initiation failed." });
+      return res.status(500).json({
+        error: "Payment initiation failed."
+      });
     }
   } catch (error) {
-    return res.status(500).json({ error: "Error initiating payment." });
+    return res.status(500).json({
+      error: "Error initiating payment."
+    });
   }
 });
 
 
+
+
 export const callback = catchAsyncError(async (req, res) => {
   console.log("Incoming Callback Request:", req.headers);
-  const { paymentId } = req.query;
+  const {
+    paymentId
+  } = req.query;
 
   if (!paymentId) {
-    return res.status(400).json({ error: "Payment ID is missing." });
+    return res.status(400).json({
+      error: "Payment ID is missing."
+    });
   }
 
   try {
     // Prepare the request to get the payment status
-    const data = { Key: paymentId, KeyType: "PaymentId" };
+    const data = {
+      Key: paymentId,
+      KeyType: "PaymentId"
+    };
     console.log("Request Data:", data);
 
     const response = await fatoorahServices.getPaymentStatus(data);
@@ -300,35 +335,52 @@ export const callback = catchAsyncError(async (req, res) => {
 
     if (!response || !response.IsSuccess) {
       console.error("Failed to retrieve payment status:", response);
-      return res.status(500).json({ error: "Failed to retrieve payment status." });
+      return res.status(500).json({
+        error: "Failed to retrieve payment status."
+      });
     }
 
-    const { InvoiceId, InvoiceStatus, InvoiceValue } = response.Data;
+    const {
+      InvoiceId,
+      InvoiceStatus,
+      InvoiceValue
+    } = response.Data;
     console.log("Invoice Status:", InvoiceStatus);
     console.log("Invoice Value:", InvoiceValue);
 
     // Retrieve the order using InvoiceId or paymentId
-    const order = await orderModel.findOne({ invoiceId: InvoiceId });
+    const order = await orderModel.findOne({
+      invoiceId: InvoiceId
+    });
     console.log("Retrieved Order:", order);
 
     if (!order) {
-      return res.status(404).json({ error: "Order not found." });
+      return res.status(404).json({
+        error: "Order not found."
+      });
     }
 
     if (InvoiceStatus === "Paid") {
       // Verify the InvoiceValue matches the order's total price
       if (InvoiceValue === order.totalPrice) {
         // Update the order status
-        order.isPaid = "SUCCESS";  // Mark the order as paid
-        order.paidAt = new Date();  // Record the time of payment
+        order.isPaid = "SUCCESS"; // Mark the order as paid
+        order.paidAt = new Date(); // Record the time of payment
         await order.save();
         console.log("Order updated successfully:", order);
 
         // Update product stock
         const options = order.cartItems.map((item) => ({
           updateOne: {
-            filter: { _id: item.product },
-            update: { $inc: { quantity: -item.quantity, sold: item.quantity } },
+            filter: {
+              _id: item.product
+            },
+            update: {
+              $inc: {
+                quantity: -item.quantity,
+                sold: item.quantity
+              }
+            },
           },
         }));
 
@@ -336,7 +388,9 @@ export const callback = catchAsyncError(async (req, res) => {
         console.log("Product stock updated successfully.");
 
         // Delete the cart after successful payment
-        await cartModel.findOneAndDelete({ user: order.user });
+        await cartModel.findOneAndDelete({
+          user: order.user
+        });
         console.log("Cart deleted successfully.");
 
         // Redirect to success page
@@ -353,7 +407,9 @@ export const callback = catchAsyncError(async (req, res) => {
     }
   } catch (error) {
     console.error("Error handling callback:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({
+      error: "Internal server error"
+    });
   }
 });
 
@@ -361,73 +417,79 @@ export const callback = catchAsyncError(async (req, res) => {
 
 
 export const error = catchAsyncError(async (req, res, next) => {
+  const {
+    paymentId
+  } = req.query;
+  if (!paymentId) {
+    return res.status(400).json({
+      error: "Payment ID is missing."
+    });
+  }
+  console.log("Handling error with paymentId:", paymentId); // Debugging log
+
+
+  try {
+    // Prepare the request to get the payment status
+    const data = {
+      Key: paymentId,
+      KeyType: "PaymentId",
+    };
+
+    // Call the MyFatoorah API to check the payment status
+    const response = await fatoorahServices.getPaymentStatus(data);
     const {
-      paymentId
-    } = req.query;
-    if (!paymentId) {
-      return res.status(400).json({
-        error: "Payment ID is missing."
+      InvoiceId
+    } = response.Data;
+    const order = await orderModel.findOne({
+      invoiceId: InvoiceId
+    });
+    console.log("Retrieved Order:", order);
+
+    if (!order) {
+      return res.status(404).json({
+        error: "Order not found."
       });
     }
-    console.log("Handling error with paymentId:", paymentId); // Debugging log
+    order.isPaid = "PENDING"; // Mark the order as paid
+    order.paidAt = new Date();
 
+    order.save();
 
-    try {
-      // Prepare the request to get the payment status
-      const data = {
-        Key: paymentId,
-        KeyType: "PaymentId",
-      };
+    console.log("Error route payment status response:", response); // Debugging log
+    console.log(
+      "Error route transaction status response:",
+      response.Data.InvoiceTransactions[0]
+    ); // Debugging log
+    console.log(
+      "Error route transaction status response:",
+      response.Data.InvoiceTransactions[0].TransactionStatus
+    ); // Debugging log
 
-      // Call the MyFatoorah API to check the payment status
-      const response = await fatoorahServices.getPaymentStatus(data);
-      const {InvoiceId} = response.Data;
-      const order = await orderModel.findOne({invoiceId: InvoiceId });
-      console.log("Retrieved Order:", order);
-
-      if (!order) {
-        return res.status(404).json({ error: "Order not found." });
-      }
-      order.isPaid = "PENDING";  // Mark the order as paid
-      order.paidAt = new Date(); 
-
-      order.save();
-
-      console.log("Error route payment status response:", response); // Debugging log
-      console.log(
-        "Error route transaction status response:",
-        response.Data.InvoiceTransactions[0]
-      ); // Debugging log
-      console.log(
-        "Error route transaction status response:",
-        response.Data.InvoiceTransactions[0].TransactionStatus
-      ); // Debugging log
-
-      if (!response || !response.IsSuccess) {
-        return res
-          .status(500)
-          .json({
-            error: "Failed to retrieve payment status.",
-            status: false
-          });
-      }
-
-      const {
-        InvoiceStatus
-      } = response.Data;
-
-      // Validate the payment response and handle different cases
-      if (InvoiceStatus === "Pending") {
-        return res.redirect(`http://localhost:3000/error?message=pending`);
-      }
-      if (InvoiceStatus === "Canceled") {
-        return res.redirect(`http://localhost:3000/error?message=canceled`);
-      }
-      // Additional error handling
-    } catch (error) {
-      console.error("Error handling error route:", error.message);
-      return res.status(500).json({
-        error: "Internal Server Error"
-      });
+    if (!response || !response.IsSuccess) {
+      return res
+        .status(500)
+        .json({
+          error: "Failed to retrieve payment status.",
+          status: false
+        });
     }
-  })
+
+    const {
+      InvoiceStatus
+    } = response.Data;
+
+    // Validate the payment response and handle different cases
+    if (InvoiceStatus === "Pending") {
+      return res.redirect(`http://localhost:3000/error?message=pending`);
+    }
+    if (InvoiceStatus === "Canceled") {
+      return res.redirect(`http://localhost:3000/error?message=canceled`);
+    }
+    // Additional error handling
+  } catch (error) {
+    console.error("Error handling error route:", error.message);
+    return res.status(500).json({
+      error: "Internal Server Error"
+    });
+  }
+})
