@@ -8,13 +8,14 @@ const cartSchema = mongoose.Schema(
         product: { type: mongoose.Types.ObjectId, ref: "product" },
         quantity: Number,
         price: Number,
-        priceAfterDiscount:Number,
-        priceExchanged:Number
+        priceAfterDiscount: Number,
+        priceExchanged: Number,
       },
     ],
     totalPrice: Number,
     totalPriceExchanged: Number,
     totalPriceAfterDiscount: Number,
+    totalPriceBeforeDiscount: Number, 
     discount: Number,
   },
   { timestamps: true }

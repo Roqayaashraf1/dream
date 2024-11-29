@@ -7,6 +7,7 @@ import { cartModel } from '../../../dataBase/models/cart.model.js';
 async function calcTotalPrice(cartItems, currency) {
   let totalPrice = 0;
   let totalPriceExchanged = 0;
+  let totalPriceBeforeDiscount = 0; 
   let totalItems = 0;
   const exchangeRate = await getExchangeRate(currency);
 
@@ -17,6 +18,9 @@ async function calcTotalPrice(cartItems, currency) {
 
   const newItems = sortedItems.map((item) => {
     totalItems += item.quantity;
+    const itemTotalPriceBeforeDiscount = item.price * item.quantity;
+    totalPriceBeforeDiscount += itemTotalPriceBeforeDiscount * exchangeRate;
+
     let paidQuantity = item.quantity;
 
     if (discountedItemsCount < numOfDiscountedItems) {
@@ -37,7 +41,12 @@ async function calcTotalPrice(cartItems, currency) {
     };
   });
 
-  return { totalPrice, totalPriceExchanged, newItems };
+  return {
+    totalPrice,
+    totalPriceExchanged,
+    totalPriceBeforeDiscount,
+    newItems,
+  };
 }
 
 
@@ -56,7 +65,7 @@ export const addToCart = catchAsyncError(async (req, res, next) => {
   }
 
   req.body.priceAfterDiscount = product.priceAfterDiscount;
-  
+  req.body.price = product.price;
 
   let cart = await cartModel.findOne({ user: req.user._id });
 
@@ -65,10 +74,11 @@ export const addToCart = catchAsyncError(async (req, res, next) => {
       user: req.user._id,
       cartItems: [{ ...req.body, quantity }],
     });
-    const { totalPrice, totalPriceExchanged, newItems } = await calcTotalPrice(cart.cartItems, currency);
+    const { totalPrice, totalPriceExchanged, totalPriceBeforeDiscount, newItems } = await calcTotalPrice(cart.cartItems, currency);
     cart.cartItems = newItems;
     cart.totalPrice = totalPrice;
     cart.totalPriceExchanged = totalPriceExchanged;
+    cart.totalPriceBeforeDiscount = totalPriceBeforeDiscount; // Save the total price before discount
     await cart.save();
     return res.json({ message: "success", result: cart });
   }
@@ -82,7 +92,8 @@ export const addToCart = catchAsyncError(async (req, res, next) => {
       return next(new AppError("Insufficient product quantity", 400));
     }
     existingItem.quantity += quantity;
-    existingItem.priceAfterDiscount = product.priceAfterDiscount; 
+    existingItem.priceAfterDiscount = product.priceAfterDiscount;
+    existingItem.price = product.price; // Update price
   } else {
     if (product.quantity < quantity) {
       return next(new AppError("Insufficient product quantity", 400));
@@ -90,53 +101,66 @@ export const addToCart = catchAsyncError(async (req, res, next) => {
     cart.cartItems.push({ ...req.body, quantity });
   }
 
-  const { totalPrice, totalPriceExchanged, newItems } = await calcTotalPrice(cart.cartItems, currency);
+  const { totalPrice, totalPriceExchanged, totalPriceBeforeDiscount, newItems } = await calcTotalPrice(cart.cartItems, currency);
   cart.cartItems = newItems;
   cart.totalPrice = totalPrice;
   cart.totalPriceExchanged = totalPriceExchanged;
+  cart.totalPriceBeforeDiscount = totalPriceBeforeDiscount; // Save the total price before discount
   await cart.save();
 
   res.json({ message: "success", cart });
 });
 
+
 export const removeProductFromCart = catchAsyncError(async (req, res, next) => {
   const currency = req.headers.currency;
+
   let result = await cartModel.findOneAndUpdate(
     { user: req.user._id },
     { $pull: { cartItems: { _id: req.params.id } } },
     { new: true }
   );
+
   if (!result) return next(new AppError(`Item not found`, 401));
 
-  const { totalPrice, totalPriceExchanged, newItems } = await calcTotalPrice(result.cartItems, currency);
+  const { totalPrice, totalPriceExchanged, totalPriceBeforeDiscount, newItems } = await calcTotalPrice(result.cartItems, currency);
   result.cartItems = newItems;
   result.totalPrice = totalPrice;
   result.totalPriceExchanged = totalPriceExchanged;
+  result.totalPriceBeforeDiscount = totalPriceBeforeDiscount;
+
   await result.save();
 
   res.json({ message: "success", result });
 });
 
+
 export const updateQuantity = catchAsyncError(async (req, res, next) => {
   const currency = req.headers.currency;
-  let product = await productModel.findById(req.params.id).select("priceAfterDiscount");
+
+  let product = await productModel.findById(req.params.id).select("price priceAfterDiscount");
   if (!product) return next(new AppError("Product not found", 401));
 
   let cart = await cartModel.findOne({ user: req.user._id });
+
   let item = cart.cartItems.find((elm) => elm.product.toString() === req.params.id);
   if (item) {
     item.quantity = req.body.quantity;
-    item.priceAfterDiscount = product.priceAfterDiscount; 
+    item.priceAfterDiscount = product.priceAfterDiscount;
+    item.price = product.price; 
   }
 
-  const { totalPrice, totalPriceExchanged, newItems } = await calcTotalPrice(cart.cartItems, currency);
+  const { totalPrice, totalPriceExchanged, totalPriceBeforeDiscount, newItems } = await calcTotalPrice(cart.cartItems, currency);
   cart.cartItems = newItems;
   cart.totalPrice = totalPrice;
   cart.totalPriceExchanged = totalPriceExchanged;
+  cart.totalPriceBeforeDiscount = totalPriceBeforeDiscount; 
+
   await cart.save();
 
   res.json({ message: "success", cart });
 });
+
 
 export const getLoggedUserCart = catchAsyncError(async (req, res, next) => {
   const { currency } = req.headers;

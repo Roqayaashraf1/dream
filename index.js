@@ -2,7 +2,6 @@ import express from "express";
 import {
   dbConnection
 } from "./dataBase/dbConnection.js";
-import './src/utilities/cronJobs.js'; 
 import morgan from "morgan";
 import cors from "cors";
 import {

@@ -203,59 +203,26 @@ export const pay = catchAsyncError(async (req, res, next) => {
   const user = await userModel.findById(req.user._id);
   if (!user) return next(new AppError("User not found", 404));
 
-  // Prepare cart items for comparison
-  const cartItemsQuery = cart.cartItems.map(item => ({
-    product: item.product.toString(),
+  const { currency } = req.headers;
+  const { shippingAddress } = req.body;
+  const totalPrice = cart.totalPrice;
+
+  const cartItemsWithExchange = cart.cartItems.map((item) => ({
+    product: item.product._id,
+    name: item.product.name,
     quantity: item.quantity,
+    price: item.price,
     priceExchanged: item.priceExchanged,
   }));
 
-  // Find a pending order for the user
   const pendingOrder = await orderModel.findOne({
     user: req.user._id,
     isPaid: 'PENDING',
   });
 
   if (pendingOrder) {
-    // Check if cart items in the pending order match the current cart items
-    const isCartItemsDifferent = pendingOrder.cartItems.find((item, index) => {
-      return (
-        item.product.toString() !== cartItemsQuery[index].product ||
-        item.quantity !== cartItemsQuery[index].quantity ||
-        item.priceExchanged !== cartItemsQuery[index].priceExchanged
-      );
-    });
-
-    // If all items are the same, return the existing invoice URL
-    if (!isCartItemsDifferent) {
-      return res.json({
-        message: "Pending order found",
-        redirectUrl: pendingOrder.invoiceURL,
-        orderId: pendingOrder._id,
-      });
-    } else {
-      // If items are different, delete the pending order
-      await pendingOrder.deleteOne();
-    }
+    await pendingOrder.deleteOne();
   }
-
-  // Define necessary details for creating a new order and initiating payment
-  const {
-    currency
-  } = req.headers;
-  const {
-    shippingAddress
-  } = req.body;
-  const totalPrice = cart.totalPrice;
-
-  const cartItemsWithExchange = cart.cartItems.map((item) => ({
-    product: item.product._id,
-    name: item.product.name, // Ensure the product name is included
-    quantity: item.quantity,
-    price: item.price,
-    priceExchanged: item.priceExchanged,
-  }));
-
   const paymentData = {
     CustomerName: user.name,
     NotificationOption: "LNK",
@@ -271,21 +238,18 @@ export const pay = catchAsyncError(async (req, res, next) => {
     const response = await fatoorahServices.sendPayment(paymentData);
 
     if (response && response.IsSuccess) {
-      const {
-        InvoiceURL,
-        InvoiceId
-      } = response.Data;
+      const { InvoiceURL, InvoiceId } = response.Data;
 
-      // Create a new order document
       const newOrder = new orderModel({
         user: req.user._id,
         cartItems: cartItemsWithExchange,
         totalPrice,
-        totalPriceExchanged: cart.totalPriceExchanged, // assuming the exchange rate is applied
+        totalPriceExchanged: cart.totalPriceExchanged, 
         currency: currency || "KWD",
         shippingAddress,
         invoiceId: InvoiceId,
-        invoiceURL: InvoiceURL
+        invoiceURL: InvoiceURL,
+        isPaid: 'PENDING',
       });
 
       await newOrder.save();
@@ -296,18 +260,12 @@ export const pay = catchAsyncError(async (req, res, next) => {
         orderId: newOrder._id,
       });
     } else {
-      return res.status(500).json({
-        error: "Payment initiation failed."
-      });
+      return res.status(500).json({ error: "Payment initiation failed." });
     }
   } catch (error) {
-    return res.status(500).json({
-      error: "Error initiating payment."
-    });
+    return res.status(500).json({ error: "Error initiating payment." });
   }
 });
-
-
 
 
 export const callback = catchAsyncError(async (req, res) => {
