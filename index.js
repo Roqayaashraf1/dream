@@ -46,16 +46,16 @@ import {
 import {
   offerRouter
 } from "./src/modules/offer/offer.router.js";
-import { popupRouter } from "./src/modules/popup/popup.router.js";
+import { popupRouter } from "./src/modules/popups/popup.router.js";
 const app = express();
 const port = 3500;
 app.use(express.json());
+
+
 app.use(cors());
-
-
-
 app.use(morgan("dev"));
-app.use(express.static("uploads"));
+app.use("/uploads",express.static("src/modules/popups/uploads/popup"));
+app.use("/products/images",express.static("src/modules/product/uploads/product"));
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/carts", cartRouter);
