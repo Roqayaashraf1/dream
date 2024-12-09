@@ -151,7 +151,7 @@ export const getSpecificOrder = catchAsyncError(async (req, res, next) => {
 
 export const getAllOrders = catchAsyncError(async (req, res, next) => {
 
-  let orders = await orderModel.find()
+  let orders = await orderModel.find({ isPaid: 'success' })
     .populate({
       path: 'cartItems.product'
     })
@@ -206,13 +206,13 @@ export const pay = catchAsyncError(async (req, res, next) => {
   const { currency } = req.headers;
   const { shippingAddress } = req.body;
   const totalPrice = cart.totalPrice;
-
   const cartItemsWithExchange = cart.cartItems.map((item) => ({
     product: item.product._id,
     name: item.product.name,
     quantity: item.quantity,
     price: item.price,
     priceExchanged: item.priceExchanged,
+   
   }));
 
   const pendingOrder = await orderModel.findOne({

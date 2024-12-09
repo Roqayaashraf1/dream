@@ -133,3 +133,25 @@ export const UpdateCategories = catchAsyncError(async (req, res, next) => {
 
 
 export const deleteCategories = factory.deleteOne(categoryModel);
+export const searchcategory = catchAsyncError(async (req, res) => {
+  let apiFeatures = new APIFeatures(categoryModel.find(), req.query)
+    .filter()
+    .selectedFields()
+    .search()
+    .sort();
+
+  let result = await apiFeatures.mongooseQuery;
+
+  try {
+    res.json({
+      message: "success",
+      page: apiFeatures.page,
+      result
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error converting currency",
+      error
+    });
+  }
+});

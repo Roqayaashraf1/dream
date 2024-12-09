@@ -56,6 +56,10 @@ const upload = multer({
   storage,
   fileFilter
 });
+export {
+  upload,
+  uploadDir
+};
 
 const productRouter = express.Router();
 productRouter.route("/")
@@ -66,7 +70,7 @@ productRouter.route("/")
     createproduct
   )
   .get(checkCurrency, getAllproducts);
-  productRouter.route("/search")
+productRouter.route("/search")
   .get(search)
 
 productRouter.route("/:id")
@@ -75,8 +79,7 @@ productRouter.route("/:id")
     protectRoutes,
     allowedTo("admin"),
     deleteproduct
-  )
-  .put(
+  ).put(
     protectRoutes,
     allowedTo("admin"),
     upload.single("image"),

@@ -16,7 +16,9 @@ import {
   getExchangeRate
 } from "../../utilities/getExchangeRate.js";
 import * as factory from "../handlers/factor.handler.js";
-
+import fs from "fs";
+import path from "path";
+import { uploadDir } from "./product.Router.js";
 
 const convertPrices = async (products, currency) => {
   if (!currency || currency === "KWD") {
@@ -32,8 +34,8 @@ const convertPrices = async (products, currency) => {
       currency,
       createdAt: new Date(item.createdAt).toLocaleString()
     }));
-    
-   
+
+
   } catch (error) {
     throw new Error("Error converting currency");
   }
@@ -73,12 +75,12 @@ export const createproduct = catchAsyncError(async (req, res) => {
 
 export const getAllproducts = catchAsyncError(async (req, res) => {
   let apiFeatures = new APIFeatures(
-    productModel.find()
+      productModel.find()
       .populate('category')
       .populate('Subcategory')
       .populate('author'),
-    req.query
-  ).filter()
+      req.query
+    ).filter()
     .search();
   const totalProducts = await productModel.countDocuments(apiFeatures.mongooseQuery.getFilter());
 
@@ -87,7 +89,9 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
 
   let result = await apiFeatures.mongooseQuery;
 
-  const { currency } = req.headers;
+  const {
+    currency
+  } = req.headers;
 
   try {
     const convertedProducts = await convertPrices(result, currency);
@@ -133,34 +137,63 @@ export const getproduct = catchAsyncError(async (req, res, next) => {
   });
 });
 
-export const UpdateProduct = catchAsyncError(async (req, res, next) => {
-  const {
-    id
-  } = req.params;
-  const {
-    title,
-    price,
-    quantity,
-    description
-  } = req.body;
-  let result = await productModel.findByIdAndUpdate(
-    id, 
-      req.body, {
-      new: true
-    }
-  );
-  if (!result) return next(new AppError("Product not found", 404));
+// export const UpdateProduct = catchAsyncError(async (req, res, next) => {
+//   const {
+//     id
+//   } = req.params;
 
-  const {
-    currency
-  } = req.headers;
-  const convertedProduct = await convertPrices([result], currency);
+//   let result = await productModel.findByIdAndUpdate(
+//     id,
+//     req.body, {
+//       new: true
+//     }
+//   );
+//   if (!result) return next(new AppError("Product not found", 404));
+
+//   const {
+//     currency
+//   } = req.headers;
+//   const convertedProduct = await convertPrices([result], currency);
+
+//   res.json({
+//     message: "success",
+//     result: convertedProduct[0]
+//   });
+// });
+export const UpdateProduct = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+ console.log(req.params)
+  // Find the product to update
+  let product = await productModel.findById(id);
+  if (!product) return next(new AppError("Product not found", 404));
+
+  // Handle file upload
+  if (req.file) {
+    const newFileName = req.file.filename;
+
+    // Delete old image if exists
+    if (product.image) {
+      const oldImagePath = path.join(uploadDir, product.image);
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath); // Delete the old image
+      }
+    }
+
+    // Update the image field with the new file name
+    req.body.image = newFileName;
+  }
+console.log(req.body)
+  // Update the product details in the database
+  let updatedProduct = await productModel.findByIdAndUpdate(id, req.body, {
+    new: true,
+  });
 
   res.json({
     message: "success",
-    result: convertedProduct[0]
+    updatedProduct,
   });
 });
+
 
 export const deleteproduct = factory.deleteOne(productModel);
 export const search = catchAsyncError(async (req, res) => {
@@ -189,7 +222,3 @@ export const search = catchAsyncError(async (req, res) => {
     });
   }
 });
-
-
-
-

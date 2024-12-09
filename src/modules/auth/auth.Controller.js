@@ -35,8 +35,10 @@ export const signin = catchAsyncError(async (req, res, next) => {
   if (!isFound) {
     return next(new AppError("Incorrect email or password", 401));
   }
-
   const match = await bcrypt.compare(password, isFound.password);
+  if(req.url.split('-')[1] === 'admin' && isFound.role !=='admin')
+    next(new AppError("NOt Trusted", 401));
+
   if (match) {
     let token = Jwt.sign({
         name: isFound.name,
@@ -54,6 +56,7 @@ export const signin = catchAsyncError(async (req, res, next) => {
   }
   next(new AppError("incorrect email or password", 401));
 });
+
 
 export const forgetPassword = catchAsyncError(async (req, res, next) => {
   const {
