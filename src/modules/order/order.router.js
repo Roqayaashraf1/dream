@@ -2,6 +2,7 @@ import express from "express";
 import {
   callback,
   createCashOrder,
+  deletorder,
   getAllOrders,
   getOrder,
   getSpecificOrder,
@@ -24,6 +25,7 @@ orderRouter.route('/allorders').get(protectRoutes, allowedTo("admin"), getAllOrd
 
 orderRouter
   .route("/:id")
+  .delete(protectRoutes, allowedTo("admin"),  deletorder)
   .post(checkCurrency, protectRoutes, allowedTo("user"), createCashOrder)
   .get(protectRoutes, allowedTo("admin"), getOrder);
 

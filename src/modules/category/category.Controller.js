@@ -49,24 +49,39 @@ export const getAllCategories = catchAsyncError(async (req, res, next) => {
     const languageField = language === 'english' || language.startsWith('en') ? 'englishname' : 'arabicname';
     const slugField = language === 'english' || language.startsWith('en') ? 'englishslug' : 'arabicslug';
 
-    let apiFeatures = new APIFeatures(categoryModel.find(), req.query)
-      .filter()
-      .selectedFields(`${languageField} ${slugField}`)
-      .search()
-      .sort();
+   let filter = {};
+    if (req.query.categoryId) {
+      filter.category = req.query.categoryId; 
+    }
+    let apiFeatures = new APIFeatures(categoryModel.find(filter), req.query)
+      .filter() 
+      .search() 
+      .sort()  
+      .selectedFields(`${languageField} ${slugField}`); 
+
+    const totalCategories = await categoryModel.countDocuments(apiFeatures.mongooseQuery.getFilter());
     
+
+    const totalPages = Math.ceil(totalCategories / 20);
+
+
+    apiFeatures.paginate();
+
     let result = await apiFeatures.mongooseQuery;
+
     result = result.map(item => {
       const obj = item.toObject();
       return {
         _id: obj._id,
         name: obj[languageField], 
-        slug: obj[slugField]     
+        slug: obj[slugField], 
+        ...obj
       };
     });
-
     res.status(200).json({
       message: "success",
+      totalCategories,
+      totalPages,
       page: apiFeatures.page,
       result
     });
@@ -74,6 +89,7 @@ export const getAllCategories = catchAsyncError(async (req, res, next) => {
     next(error);
   }
 });
+
 
 
 export const getCategory = catchAsyncError(async (req, res, next) => {

@@ -21,7 +21,10 @@ import {
 import {
   FatoorahServices
 } from "../../services/fatoorahServices.js";
+import * as factory from "../handlers/factor.handler.js";
+import { APIFeatures } from "../../utilities/APIFeatures.js";
 const fatoorahServices = new FatoorahServices();
+export const deletorder = factory.deleteOne(orderModel);
 export const createCashOrder = catchAsyncError(async (req, res, next) => {
   const cart = await cartModel.findById(req.params.id).populate("cartItems.product");
   if (!cart) return next(new AppError("Cart not found", 404));
@@ -150,33 +153,60 @@ export const getSpecificOrder = catchAsyncError(async (req, res, next) => {
 });
 
 export const getAllOrders = catchAsyncError(async (req, res, next) => {
+  try {
+   
+    let filter = { isPaid: 'SUCCESS' };  
+    if (req.query.userId) {
+      filter.user = req.query.userId; 
+    }
+    if (req.query.status) {
+      filter.status = req.query.status; 
+    }
+    let apiFeatures = new APIFeatures(orderModel.find(filter), req.query)
+      .filter()  
+      .search() 
+      .sort()    
+      .selectedFields(); 
+    const totalOrders = await orderModel.countDocuments(apiFeatures.mongooseQuery.getFilter());
 
-  let orders = await orderModel.find({ isPaid: 'success' })
-    .populate({
-      path: 'cartItems.product'
-    })
-    .populate({
-      path: 'user',
-      select: 'name email'
+    const totalPages = Math.ceil(totalOrders / 20);
+
+    apiFeatures.paginate();
+
+ 
+    let orders = await apiFeatures.mongooseQuery
+      .populate({
+        path: 'cartItems.product',  
+      })
+      .populate({
+        path: 'user',  
+        select: 'name email',
+      });
+
+    const ordersWithExchange = orders.map((order) => ({
+      ...order._doc,
+      user: {
+        name: order.user.name,
+        email: order.user.email,
+      },
+      cartItems: order.cartItems.map((item) => ({
+        ...item._doc,
+        priceExchanged: item.priceExchanged,  
+      })),
+    }));
+    res.status(200).json({
+      message: "success",
+      totalOrders,
+      totalPages,
+      page: apiFeatures.page,
+      orders: ordersWithExchange,
     });
 
-  const ordersWithExchange = orders.map((order) => ({
-    ...order._doc,
-    user: {
-      name: order.user.name,
-      email: order.user.email
-    },
-    cartItems: order.cartItems.map((item) => ({
-      ...item._doc,
-      priceExchanged: item.priceExchanged,
-    })),
-  }));
-
-  res.status(200).json({
-    message: "success",
-    orders: ordersWithExchange
-  });
+  } catch (error) {
+    next(error);
+  }
 });
+
 
 
 export const getOrder = catchAsyncError(async (req, res, next) => {
@@ -321,13 +351,12 @@ export const callback = catchAsyncError(async (req, res) => {
     if (InvoiceStatus === "Paid") {
       // Verify the InvoiceValue matches the order's total price
       if (InvoiceValue === order.totalPrice) {
-        // Update the order status
-        order.isPaid = "SUCCESS"; // Mark the order as paid
-        order.paidAt = new Date(); // Record the time of payment
+     
+        order.isPaid = "SUCCESS"; 
+        order.paidAt = new Date();  
         await order.save();
         console.log("Order updated successfully:", order);
 
-        // Update product stock
         const options = order.cartItems.map((item) => ({
           updateOne: {
             filter: {
