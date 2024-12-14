@@ -1,10 +1,20 @@
 import express from "express";
-import { createoffer, deleteOffer, getAllOffers } from "./offer.controller.js";
-import { allowedTo, protectRoutes } from "../auth/auth.Controller.js";
+import {
+    createoffer,
+    deleteOffer,
+    getAllOffers
+} from "./offer.controller.js";
+import {
+    allowedTo,
+    protectRoutes
+} from "../auth/auth.Controller.js";
 
 const offerRouter = express.Router();
 offerRouter.route("/").post(protectRoutes, allowedTo("admin"), createoffer)
-.get(getAllOffers);
+    .get(getAllOffers);
 offerRouter.route("/:id").delete(protectRoutes, allowedTo("admin"), deleteOffer);
-
-export { offerRouter };
+offerRouter.route("/getalloffers-admin")
+    .get(protectRoutes, allowedTo("admin"), getAllOffers)
+export {
+    offerRouter
+};

@@ -11,7 +11,7 @@ import {
   deleteproduct,
   getAllproducts,
   getproduct,
-  search,
+  
 
 } from "./product.Controller.js";
 import {
@@ -70,8 +70,8 @@ productRouter.route("/")
     createproduct
   )
   .get(checkCurrency, getAllproducts);
-productRouter.route("/search")
-  .get(search)
+productRouter.route("/getallproduts-admin")
+  .get(protectRoutes, allowedTo("admin"),getAllproducts)
 
 productRouter.route("/:id")
   .get(checkCurrency, getproduct)

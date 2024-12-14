@@ -48,7 +48,7 @@ export const getAllCategories = catchAsyncError(async (req, res, next) => {
     const language = languageHeader.toLowerCase();
     const languageField = language === 'english' || language.startsWith('en') ? 'englishname' : 'arabicname';
     const slugField = language === 'english' || language.startsWith('en') ? 'englishslug' : 'arabicslug';
-
+    
    let filter = {};
     if (req.query.categoryId) {
       filter.category = req.query.categoryId; 
@@ -122,7 +122,27 @@ export const getCategory = catchAsyncError(async (req, res, next) => {
   }
 });
 
+export const getCategoryadmin = catchAsyncError(async (req, res, next) => {
+  try {
+    const { id } = req.params;
 
+ 
+    const category = await categoryModel.findById(id);
+    
+    console.log('Category details:', category);
+    
+    if (!category) {
+      return next(new AppError('Category not found', 404));
+    }
+  
+    res.json({
+      message: 'success',
+      category
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 export const UpdateCategories = catchAsyncError(async (req, res, next) => {
   const {
     id
@@ -149,25 +169,3 @@ export const UpdateCategories = catchAsyncError(async (req, res, next) => {
 
 
 export const deleteCategories = factory.deleteOne(categoryModel);
-export const searchcategory = catchAsyncError(async (req, res) => {
-  let apiFeatures = new APIFeatures(categoryModel.find(), req.query)
-    .filter()
-    .selectedFields()
-    .search()
-    .sort();
-
-  let result = await apiFeatures.mongooseQuery;
-
-  try {
-    res.json({
-      message: "success",
-      page: apiFeatures.page,
-      result
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Error converting currency",
-      error
-    });
-  }
-});

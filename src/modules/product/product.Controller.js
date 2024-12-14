@@ -15,10 +15,50 @@ import {
 import {
   getExchangeRate
 } from "../../utilities/getExchangeRate.js";
-import * as factory from "../handlers/factor.handler.js";
 import fs from "fs";
 import path from "path";
-import { uploadDir } from "./product.Router.js";
+import { fileURLToPath } from 'url';
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, "/uploads/product");
+
+fs.mkdirSync(uploadDir, { recursive: true });
+
+export const deleteproduct = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+
+  const product = await productModel.findById(id);
+  if (!product) {
+    return res.status(404).json({
+      message: "Product not found",
+    });
+  }
+
+  if (product.image) {
+    const imagePath = path.join(uploadDir, product.image);
+    try {
+      fs.unlink(imagePath, (err) => {
+        if (err) {
+          console.error("Error deleting image file:", err);
+        } else {
+          console.log("Image deleted successfully.");
+        }
+      });
+    } catch (error) {
+      console.error("Error during image deletion:", error);
+    }
+  }
+
+  await productModel.findByIdAndDelete(id);
+
+  res.json({
+    message: "Product and associated image deleted successfully",
+  });
+});
+
+
 
 const convertPrices = async (products, currency) => {
   if (!currency || currency === "KWD") {
@@ -194,8 +234,6 @@ console.log(req.body)
   });
 });
 
-
-export const deleteproduct = factory.deleteOne(productModel);
 export const search = catchAsyncError(async (req, res) => {
   let apiFeatures = new APIFeatures(productModel.find(), req.query)
     .filter()

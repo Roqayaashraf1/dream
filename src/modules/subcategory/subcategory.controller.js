@@ -97,6 +97,21 @@ export const getSubCategory = catchAsyncError(async (req, res, next) => {
     });
 });
 
+export const getSubCategoryadmin = catchAsyncError(async (req, res, next) => {
+    const {
+        id
+    } = req.params;
+    let result = await SubcategoryModel.findById(id)
+
+    if (!result) return next(new AppError(`Subcategory not found`, 404));
+
+ 
+
+    res.json({
+        message: "success",
+        result
+    });
+});
 
 export const updateSubCategory = catchAsyncError(async (req, res, next) => {
     const {

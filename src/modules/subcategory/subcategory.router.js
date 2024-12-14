@@ -7,8 +7,10 @@ import {
 import {
     checkCurrency
 } from "../country/country.controller.js";
-const SubcategoryRouter= express.Router({mergeParams:true})
+const SubcategoryRouter = express.Router()
 
+SubcategoryRouter.route("/getallsubcategory-admin")
+  .get(protectRoutes, allowedTo("admin"),Subcategory.getAllSubCategories)
 
 
 SubcategoryRouter.route('/').post(protectRoutes,
@@ -21,7 +23,7 @@ SubcategoryRouter.route('/:id')
         allowedTo("admin"), Subcategory.updateSubCategory)
     .delete(protectRoutes,
         allowedTo("admin"), Subcategory.deleteSubCategory)
-
+SubcategoryRouter.route('/admin/:id').get(protectRoutes, allowedTo("admin"), Subcategory.getSubCategoryadmin)
 
 export {
     SubcategoryRouter

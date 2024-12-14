@@ -10,6 +10,57 @@ import {
 import {
   AppError
 } from "../../utilities/appError.js";
+import fs from 'fs';  
+import path from 'path';    
+import { fileURLToPath } from 'url';  // Import fileURLToPath from 'url'
+import { dirname } from 'path';  // Import dirname from 'path'
+
+// Compute __dirname equivalent in ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);  // Get the directory of the current file
+
+export const removePopup = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+
+  // Find the popup by ID
+  const popup = await popupModel.findById(id);
+
+  // If the popup is not found, return a 404 response
+  if (!popup) {
+    return res.status(404).json({
+      message: "Popup not found",
+    });
+  }
+
+  // Define the path for the image to delete
+  const imagePath = path.join(__dirname, 'uploads', 'popup', popup.image);
+
+  try {
+    // Delete the popup from the database
+    await popupModel.findByIdAndDelete(id);
+
+    // Attempt to delete the image file
+    fs.unlink(imagePath, (err) => {
+      if (err && err.code !== 'ENOENT') {
+        console.error("Error deleting image file:", err);
+      }
+    });
+
+    // Return a success message if everything went well
+    res.json({
+      message: "Popup and associated image deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Error during popup deletion:", error);
+    // Return a 500 error if something goes wrong
+    return res.status(500).json({
+      message: "Internal Server Error during popup deletion. Please try again later.",
+    });
+  }
+});
+
+export default removePopup;
 
 export const addToPopup = catchAsyncError(async (req, res, next) => {
   const image = req.file ? req.file.filename : null;
@@ -29,21 +80,6 @@ export const addToPopup = catchAsyncError(async (req, res, next) => {
   res.json({
     message: "success",
     result
-  });
-});
-
-export const removePopup = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
-  const result = await popupModel.findByIdAndDelete(id);
-
-  if (!result) {
-    return res.status(404).json({
-      message: "Popup not found",
-    });
-  }
-
-  res.json({
-    message: "popup deleted "
   });
 });
 
