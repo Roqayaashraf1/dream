@@ -154,7 +154,6 @@ export const getSpecificOrder = catchAsyncError(async (req, res, next) => {
 
 export const getAllOrders = catchAsyncError(async (req, res, next) => {
   try {
-   
     let filter = { isPaid: 'SUCCESS' };  
     if (req.query.userId) {
       filter.user = req.query.userId; 
@@ -162,18 +161,14 @@ export const getAllOrders = catchAsyncError(async (req, res, next) => {
     if (req.query.status) {
       filter.status = req.query.status; 
     }
+
+    // Prepare the query without pagination
     let apiFeatures = new APIFeatures(orderModel.find(filter), req.query)
-      .filter()  
-      .search() 
-      .sort()    
-      .selectedFields(); 
-    const totalOrders = await orderModel.countDocuments(apiFeatures.mongooseQuery.getFilter());
+      .filter()
+      .search()
+      .sort()
+      .selectedFields();
 
-    const totalPages = Math.ceil(totalOrders / 20);
-
-    apiFeatures.paginate();
-
- 
     let orders = await apiFeatures.mongooseQuery
       .populate({
         path: 'cartItems.product',  
@@ -194,11 +189,9 @@ export const getAllOrders = catchAsyncError(async (req, res, next) => {
         priceExchanged: item.priceExchanged,  
       })),
     }));
+
     res.status(200).json({
       message: "success",
-      totalOrders,
-      totalPages,
-      page: apiFeatures.page,
       orders: ordersWithExchange,
     });
 

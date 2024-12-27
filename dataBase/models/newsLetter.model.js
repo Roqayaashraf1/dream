@@ -4,7 +4,6 @@ const newsLetterSchema = mongoose.Schema({
         type: String,
         trim: true,
         required: [true, "email required"],
-        minLength: 1,
         unique: [true, "email must be required"],
     }
 }, {

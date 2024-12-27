@@ -6,8 +6,7 @@ const productSchema = mongoose.Schema(
       type: String,
       unique: [true, "Product title must be unique"],
       trim: true,
-      required: [true, "Product title is required"],
-      minLength: [2, "Product title is too short"],
+      required: [true, "Product title is required"]
     },
     slug: {
       type: String,
@@ -16,8 +15,7 @@ const productSchema = mongoose.Schema(
     },
     price: {
       type: Number,
-      required: [true, "Product price is required"],
-      min: 0,
+      required: [true, "Product price is required"]
     },
     priceExchanged: Number,
     currency: {
@@ -26,26 +24,21 @@ const productSchema = mongoose.Schema(
     },
     papersnumber: Number,
     priceAfterDiscount: {
-      type: Number,
-      min: 0,
+      type: Number
     },
     description: {
       type: String,
-      minLength: [5, "Product description is too short"],
-      maxLength: [300, "Product description is too long"],
       required: [true, "Product description is required"],
       trim: true,
     },
     quantity: {
       type: Number,
       default: 0,
-      min: 0,
       required: [true, "Product quantity is required"],
     },
     sold: {
       type: Number,
       default: 0,
-      min: 0,
     },
     category: {
       type: mongoose.Types.ObjectId,

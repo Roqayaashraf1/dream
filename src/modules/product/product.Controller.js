@@ -82,35 +82,70 @@ const convertPrices = async (products, currency) => {
 };
 
 export const createproduct = catchAsyncError(async (req, res) => {
+  try {
+      // Handle missing or invalid image
+      if (!req.file) {
+          return res.status(400).json({ message: "Image file is required" });
+      }
 
-  req.body.image = req.file.filename;
-  const {
-    title,
-    description,
-    price,
-    quantity,
-    author,
-    category,
-    papersnumber,
-    Subcategory
-  } = req.body;
+      req.body.image = req.file.filename;
+      const { title, description, price, quantity, author, category, papersnumber, Subcategory } = req.body;
 
-  req.body.slug = slugify(title);
-  req.body.priceAfterDiscount = price;
-  let result = new productModel(req.body);
-  console.log(result)
+      // Validate required fields
+      if (!title || !description || !price || !quantity || !author || !category || !papersnumber || !Subcategory) {
+          return res.status(400).json({ message: "All fields are required" });
+      }
 
-  await result.save();
+      // Creating slug and priceAfterDiscount
+      req.body.slug = slugify(title);
+      req.body.priceAfterDiscount = price;
 
-  const {
-    currency
-  } = req.headers;
-  const convertedProduct = await convertPrices([result], currency);
+      // Create the product object
+      const result = new productModel(req.body);
+      console.log(result);
 
-  res.json({
-    message: "success",
-    result: convertedProduct[0]
-  });
+      // Save the product and handle Mongoose validation errors
+      await result.save();
+
+      const { currency } = req.headers;
+
+      // Handle missing or invalid currency in headers
+      if (!currency) {
+          return res.status(400).json({ message: "Currency is required in headers" });
+      }
+
+      // Convert the product price based on currency
+      const convertedProduct = await convertPrices([result], currency);
+
+      // Return the response
+      return res.json({
+          message: "success",
+          result: convertedProduct[0]
+      });
+
+  } catch (error) {
+      console.error("Error creating product:", error);
+
+      // Check if the error is a Mongoose validation error
+      if (error.name === 'ValidationError') {
+          // Extract the validation error details
+          const validationErrors = Object.keys(error.errors).map(field => {
+              return { field: field, message: error.errors[field].message };
+          });
+
+          // Return a 400 status with validation errors
+          return res.status(400).json({
+              message: "Validation failed",
+              errors: validationErrors
+          });
+      }
+
+      // Return a generic error message for other types of errors
+      return res.status(500).json({
+          message: "Error creating product",
+          error: error.message || "Internal Server Error"
+      });
+  }
 });
 
 export const getAllproducts = catchAsyncError(async (req, res) => {
@@ -151,6 +186,29 @@ export const getAllproducts = catchAsyncError(async (req, res) => {
 });
 
 
+export const getAllproductsadmin = catchAsyncError(async (req, res) => {
+  try {
+    let result = await productModel.find()
+      .populate('category')
+      .populate('Subcategory')
+      .populate('author');
+
+    const { currency } = req.headers;
+
+    const convertedProducts = await convertPrices(result, currency);
+
+    res.json({
+      message: "success",
+      result: convertedProducts,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error retrieving products",
+      error,
+    });
+  }
+});
+
 
 
 export const getproduct = catchAsyncError(async (req, res, next) => {
@@ -177,29 +235,7 @@ export const getproduct = catchAsyncError(async (req, res, next) => {
   });
 });
 
-// export const UpdateProduct = catchAsyncError(async (req, res, next) => {
-//   const {
-//     id
-//   } = req.params;
 
-//   let result = await productModel.findByIdAndUpdate(
-//     id,
-//     req.body, {
-//       new: true
-//     }
-//   );
-//   if (!result) return next(new AppError("Product not found", 404));
-
-//   const {
-//     currency
-//   } = req.headers;
-//   const convertedProduct = await convertPrices([result], currency);
-
-//   res.json({
-//     message: "success",
-//     result: convertedProduct[0]
-//   });
-// });
 export const UpdateProduct = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
  console.log(req.params)

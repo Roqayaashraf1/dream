@@ -4,14 +4,12 @@ const SubcategorySchema = mongoose.Schema({
     englishname: {
         type: String,
         unique: [true, "name is required"],
-        trim: true,
-        minLength: [2, "too short category name"],
+        trim: true
     },
     arabicname: {
         type: String,
         unique: [true, "name is required"],
-        trim: true,
-        minLength: [2, "too short category name"],
+        trim: true
     },
     slug: {
         type: String,

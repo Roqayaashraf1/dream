@@ -12,6 +12,7 @@ import {
     SubcategoryModel
 } from "../../../dataBase/models/subcategory.model.js";
 import { APIFeatures } from "../../utilities/APIFeatures.js";
+import { categoryModel } from "../../../dataBase/models/category.model.js";
 
 
 export const createSubCategory = catchAsyncError(async (req, res) => {
@@ -40,23 +41,10 @@ export const getAllSubCategories = catchAsyncError(async (req, res) => {
             category: req.params.categoryId
         };
     }
-    let apiFeatures = new APIFeatures(
-        SubcategoryModel.find(filter)
-        .populate('category'),
-        req.query
-    ).filter()
-    .search();
-
-    const totalSubcategories = await SubcategoryModel.countDocuments(apiFeatures.mongooseQuery.getFilter());
-
-    const totalPages = Math.ceil(totalSubcategories / 20);
-
-    apiFeatures.paginate().sort().selectedFields();
-
-    let result = await apiFeatures.mongooseQuery;
+    let result = await SubcategoryModel.find(filter)
+    .populate('category');
 
     const language = req.headers.language || 'arabic';
-
     result = result.map(subcategory => ({
         name: language === 'english' ? subcategory.englishname : subcategory.arabicname,
         ...subcategory._doc
@@ -64,12 +52,10 @@ export const getAllSubCategories = catchAsyncError(async (req, res) => {
 
     res.json({
         message: "success",
-        totalSubcategories,
-        totalPages,
-        page: apiFeatures.page,
         result
     });
 });
+  
 
 
 export const getSubCategory = catchAsyncError(async (req, res, next) => {

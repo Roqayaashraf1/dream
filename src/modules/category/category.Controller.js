@@ -7,9 +7,6 @@ import {
 } from "../../utilities/appError.js";
 import * as factory from "../handlers/factor.handler.js";
 import {
-  APIFeatures
-} from "../../utilities/APIFeatures.js";
-import {
   catchAsyncError
 } from "../../middleWare/catchAsyncError.js";
 import {
@@ -41,48 +38,19 @@ export const createCategory = catchAsyncError(async (req, res) => {
     });
   }
 });
-
 export const getAllCategories = catchAsyncError(async (req, res, next) => {
   try {
-    const languageHeader = req.headers['accept-language'] || 'arabic';
-    const language = languageHeader.toLowerCase();
-    const languageField = language === 'english' || language.startsWith('en') ? 'englishname' : 'arabicname';
-    const slugField = language === 'english' || language.startsWith('en') ? 'englishslug' : 'arabicslug';
-    
-   let filter = {};
-    if (req.query.categoryId) {
-      filter.category = req.query.categoryId; 
-    }
-    let apiFeatures = new APIFeatures(categoryModel.find(filter), req.query)
-      .filter() 
-      .search() 
-      .sort()  
-      .selectedFields(`${languageField} ${slugField}`); 
+      let result = await categoryModel.find()
+     
+      const language = req.headers.language || 'arabic';
+      result = result.map(category => ({
+          name: language === 'english' ? category.englishname : category.arabicname,
+          ...category._doc
+      }));
+  
 
-    const totalCategories = await categoryModel.countDocuments(apiFeatures.mongooseQuery.getFilter());
-    
-
-    const totalPages = Math.ceil(totalCategories / 20);
-
-
-    apiFeatures.paginate();
-
-    let result = await apiFeatures.mongooseQuery;
-
-    result = result.map(item => {
-      const obj = item.toObject();
-      return {
-        _id: obj._id,
-        name: obj[languageField], 
-        slug: obj[slugField], 
-        ...obj
-      };
-    });
     res.status(200).json({
       message: "success",
-      totalCategories,
-      totalPages,
-      page: apiFeatures.page,
       result
     });
   } catch (error) {

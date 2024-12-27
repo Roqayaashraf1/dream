@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 const popupSchema = mongoose.Schema({
   user: {
@@ -11,7 +10,7 @@ const popupSchema = mongoose.Schema({
   },
   image: String,
   title: {
-    type:String
+    type: String
   }
 }, {
   timestamps: true

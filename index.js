@@ -47,6 +47,7 @@ import {
   offerRouter
 } from "./src/modules/offer/offer.router.js";
 import { popupRouter } from "./src/modules/popups/popup.router.js";
+import { contactusRouter } from "./src/modules/contactus/contactus.Router.js";
 const app = express();
 const port = 3500;
 app.use(express.json());
@@ -69,6 +70,8 @@ app.use("/api/v1/subcategory", SubcategoryRouter);
 app.use("/api/v1/newsletter", newsLetterRouter);
 app.use("/api/v1/offers", offerRouter);
 app.use("/api/v1/popup", popupRouter);
+app.use("/api/v1/contactus", contactusRouter);
+
 app.all("*", (req, res, next) => {
   next(new AppError(`can't find this route: ${req.originalUrl}`, 404));
 });

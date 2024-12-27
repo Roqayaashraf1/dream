@@ -10,6 +10,7 @@ import {
   createproduct,
   deleteproduct,
   getAllproducts,
+  getAllproductsadmin,
   getproduct,
   
 
@@ -71,7 +72,7 @@ productRouter.route("/")
   )
   .get(checkCurrency, getAllproducts);
 productRouter.route("/getallproduts-admin")
-  .get(protectRoutes, allowedTo("admin"),getAllproducts)
+  .get(protectRoutes, allowedTo("admin"),getAllproductsadmin)
 
 productRouter.route("/:id")
   .get(checkCurrency, getproduct)
